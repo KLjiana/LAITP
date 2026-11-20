@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://laitp.local/schemas/detection/dataset-manifest-2.0-draft.schema.json",
+  "title": "LAITP 检测数据集清单 2.0 草案（未激活）",
+  "description": "检测数据集清单 2.0 的结构候选，依据 docs/detection-contract-draft.md 第 3.3 节。草案、未激活：不属于当前分类契约 1.0，没有加入 schemas/ 根目录，也未被 backend/ 的任何生产代码加载或引用。本 Schema 用固定标记 schema_version: 2.0-draft 和 splits 分组表达候选结构；样本已纳入 image/annotation 引用与 sha256、width、height、box_count 追溯字段（capture_batch 可选），顶层可选 dataset_version 也只允许 2.0-draft。文档第 3.3 节的 dataset_version: 2.0 是正式版本候选值，未激活，版本命名与必填性由 Q1/P2 决定，见同目录 README.md。跨字段规则（标注文件存在性与可解析性、annotation 中的 image 与样本 image 一致、尺寸与图片实际解码结果一致、class_id 上界、box_count 与标注框数一致、同一采集批次不跨划分、图片可解码）无法用本 Schema 表达，由后续校验器实现（当前未实现）。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "dataset_id",
+    "created_at",
+    "classes",
+    "splits"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "2.0-draft",
+      "description": "结构版本草案标记，固定为 2.0-draft。它区别于分类数据集清单 1.x，也区别于文档第 3.3 节的正式版本候选值 2.0；未完成契约升版前不得改写为 2.0，错误版本必须被拒绝。"
+    },
+    "dataset_version": {
+      "type": "string",
+      "const": "2.0-draft",
+      "description": "可选版本字段，沿用草案文档第 3.3 节的 dataset_version 命名；当前只允许 2.0-draft，且与 schema_version 为同一标记。正式版本号 2.0 是文档候选值、未激活；两者是否需要合并或去掉其一，由 Q1/P2 决定，见 README.md。"
+    },
+    "dataset_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "created_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "classes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1024,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/className"
+      },
+      "description": "显式有序类别表，数组下标就是 class_id，禁止加载时排序。草案允许单类（minItems 1），与分类数据集清单 1.0 的 minItems 2 不同；单类检测是否正式支持为待决问题 Q2。"
+    },
+    "splits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "train",
+        "val",
+        "test"
+      ],
+      "properties": {
+        "train": {
+          "$ref": "#/$defs/split"
+        },
+        "val": {
+          "$ref": "#/$defs/split"
+        },
+        "test": {
+          "$ref": "#/$defs/split"
+        }
+      },
+      "description": "train/val/test 三个划分都必须是对象，每个划分通过 samples 引用样本。划分由清单决定，不从目录名推断；同一采集批次不得跨划分、test 冻结等规则不在本 Schema 内。"
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+      "description": "数据集 ID，复用分类清单的可移植标识符规则。"
+    },
+    "timestamp": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 35,
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?(Z|[+-][0-9]{2}:[0-9]{2})$",
+      "description": "ISO 8601 时间戳，必须带时区。"
+    },
+    "className": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^(?!.*[\\x00-\\x1f\\x7f])\\S(?:.*\\S)?$",
+      "description": "非空且首尾无空白的类别名称，允许中文；类别改名不改变 ID，调整顺序属于不兼容变更。"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^(?![A-Za-z]:)(?!/)(?!.*\\\\)(?!.*//)[^/<>:\"|?*\\x00-\\x1f]+(?:/[^/<>:\"|?*\\x00-\\x1f]+)*$",
+      "not": {
+        "pattern": "(^|/)\\.\\.?(/|$)"
+      },
+      "description": "相对于项目 data/ 数据根的相对路径。结构上禁止绝对路径、盘符、反斜杠、空路径段以及 . / .. 段；与真实文件的一致性、Windows 保留名、大小写冲突和符号链接由后续校验器补充检查。"
+    },
+    "split": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "samples"
+      ],
+      "properties": {
+        "samples": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sample"
+          },
+          "description": "该划分的样本引用数组。空数组是否允许、每个划分的最小样本数由后续校验器/P2 决定，本 Schema 不通过 minItems 预设结论。"
+        }
+      },
+      "description": "单个数据划分；samples 字段必须存在，缺字段不等于空划分。"
+    },
+    "sample": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "image",
+        "annotation",
+        "sha256",
+        "width",
+        "height",
+        "box_count"
+      ],
+      "properties": {
+        "image": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "annotation": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "图片文件内容的 SHA-256，64 位小写十六进制。结构只校验形式；与真实图片内容一致、图片可解码以及图片与标注的绑定关系由后续校验器核对（当前未实现）。"
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "图片解码后的实际像素宽度，必填且大于 0；必须与图片实际解码结果、标注中的 width 一致，由后续校验器核对。"
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "图片解码后的实际像素高度，必填且大于 0；必须与图片实际解码结果、标注中的 height 一致，由后续校验器核对。"
+        },
+        "box_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "标注框数量，整数且 >= 0。本 Schema 按草案允许 0，用于表达空标注（负样本）；空标注是否合法、负样本比例上限仍为待决问题 Q6，结构允许不代表该用法已获批准。必须与标注文件 boxes 数量一致，由后续校验器核对。"
+        },
+        "capture_batch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "可选的采集批次标识，非空字符串。批次命名、唯一性以及同一批次不跨划分规则待 Q7/P2 决定，本 Schema 只要求非空；跨划分约束由后续校验器检查。"
+        }
+      },
+      "description": "样本引用与追溯信息：image 为图片相对路径，annotation 为每图标注文件相对路径，sha256 为图片内容摘要，width/height 为图片像素尺寸，box_count 为标注框数量；这 6 个字段必填，capture_batch 可选（待决）。路径都禁止绝对路径、盘符、反斜杠和 ..。图片与标注的对应关系、摘要、尺寸和框数一致性由后续校验器核对。"
+    }
+  }
+}

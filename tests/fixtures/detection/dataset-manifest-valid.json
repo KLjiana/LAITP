@@ -1,0 +1,50 @@
+{
+  "schema_version": "2.0-draft",
+  "dataset_version": "2.0-draft",
+  "dataset_id": "ds-20261119-0001",
+  "created_at": "2026-11-19T10:00:00+08:00",
+  "classes": [
+    "水杯"
+  ],
+  "splits": {
+    "train": {
+      "samples": [
+        {
+          "image": "images/batch-1/001.png",
+          "annotation": "annotations/batch-1/001.json",
+          "sha256": "c5e448d067816253e55121d6bc5bf6bccac971231e7eee33bbf06b235c8bf1cc",
+          "width": 640,
+          "height": 480,
+          "box_count": 1,
+          "capture_batch": "batch-1"
+        }
+      ]
+    },
+    "val": {
+      "samples": [
+        {
+          "image": "images/batch-2/002.png",
+          "annotation": "annotations/batch-2/002.json",
+          "sha256": "70197157a7450bb4b54df4b7f6057c9eeef7c71ca854751c33831ad5d02aaa47",
+          "width": 640,
+          "height": 480,
+          "box_count": 2,
+          "capture_batch": "batch-2"
+        }
+      ]
+    },
+    "test": {
+      "samples": [
+        {
+          "image": "test-images/batch-3/003.png",
+          "annotation": "test-annotations/batch-3/003.json",
+          "sha256": "d59d9c255e5bd6dea1fa364fd04f616b5f06b289a2c8c2c9284b32db1ffb3422",
+          "width": 1280,
+          "height": 720,
+          "box_count": 3,
+          "capture_batch": "batch-3"
+        }
+      ]
+    }
+  }
+}

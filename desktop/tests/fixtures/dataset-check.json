@@ -1,0 +1,16 @@
+{
+  "ok": true,
+  "issues": [],
+  "counts": {
+    "total": 9,
+    "splits": { "train": 6, "val": 3, "test": 0 },
+    "by_class": []
+  },
+  "manifest_path": "C:/项目/data/dataset-manifest.json",
+  "policy": {
+    "require_test_split": false,
+    "min_train_per_class": 1,
+    "min_val_per_class": 1,
+    "min_test_per_class": 0
+  }
+}

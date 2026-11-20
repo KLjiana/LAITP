@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://laitp.local/schemas/message-envelope.schema.json",
+  "title": "LAITP 进程消息信封（协议 1.x）",
+  "description": "docs/model-contract.md 第 6 节的结构约束。标准输出每行一条消息；任务归属、序号递增和延迟消息由调用方的任务状态机补充校验。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol_version",
+    "request_id",
+    "project_id",
+    "task_id",
+    "message_type",
+    "sequence",
+    "artifact_id",
+    "payload"
+  ],
+  "properties": {
+    "protocol_version": { "$ref": "#/$defs/protocolVersion" },
+    "request_id": { "$ref": "#/$defs/identifier" },
+    "project_id": { "$ref": "#/$defs/identifier" },
+    "task_id": { "$ref": "#/$defs/identifier" },
+    "message_type": { "enum": ["progress", "result", "error", "cancelled"] },
+    "sequence": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991,
+      "description": "同一任务内由发送方维护的递增序号，从 0 或 1 开始，用于识别重复或迟到消息。"
+    },
+    "artifact_id": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+      "description": "操作已有模型时必填；新模型生成前为 null，成功结果中必须填写。"
+    },
+    "payload": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "message_type": { "const": "progress" } },
+        "required": ["message_type"]
+      },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/progressPayload" } } }
+    },
+    {
+      "if": {
+        "properties": { "message_type": { "const": "result" } },
+        "required": ["message_type"]
+      },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/resultPayload" } } }
+    },
+    {
+      "if": {
+        "properties": { "message_type": { "const": "error" } },
+        "required": ["message_type"]
+      },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/errorPayload" } } }
+    },
+    {
+      "if": {
+        "properties": { "message_type": { "const": "cancelled" } },
+        "required": ["message_type"]
+      },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/cancelledPayload" } } }
+    }
+  ],
+  "$defs": {
+    "protocolVersion": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 15,
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "description": "进程通信协议版本，与模型契约版本独立维护。"
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^(?![A-Za-z]:)(?!/)(?!.*\\\\)(?!.*//)(?!(?:.*/)?\\.{1,2}(?:/|$))[^/<>:\"|?*\\x00-\\x1f]+(?:/[^/<>:\"|?*\\x00-\\x1f]+)*$"
+    },
+    "progressPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage", "completed", "total"],
+      "properties": {
+        "stage": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "completed": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "total": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "总量未知时显式写 null；已知时必须满足 0 <= completed <= total。"
+        },
+        "unit": { "type": "string", "minLength": 1, "maxLength": 16 },
+        "message": { "type": "string", "minLength": 1, "maxLength": 512 }
+      }
+    },
+    "artifactReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "manifest_path", "manifest_sha256"],
+      "properties": {
+        "artifact_id": { "$ref": "#/$defs/identifier" },
+        "manifest_path": { "$ref": "#/$defs/relativePath" },
+        "manifest_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "prediction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["class_id", "label", "probability"],
+      "properties": {
+        "class_id": { "type": "integer", "minimum": 0, "maximum": 1023 },
+        "label": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "probability": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "resultPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation", "artifact"],
+      "properties": {
+        "operation": { "enum": ["train", "export", "validate", "predict"] },
+        "artifact": { "$ref": "#/$defs/artifactReference" },
+        "predictions": {
+          "type": "array",
+          "maxItems": 1024,
+          "items": { "$ref": "#/$defs/prediction" }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "operation": { "const": "predict" } }, "required": ["operation"] },
+          "then": {
+            "required": ["predictions"],
+            "properties": { "predictions": { "minItems": 1 } }
+          },
+          "else": {
+            "properties": { "predictions": { "not": {} } }
+          }
+        }
+      ]
+    },
+    "errorPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "stage", "message"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]{2,63}$",
+          "description": "稳定错误码，取值见 docs/contract-validation.md。"
+        },
+        "stage": {
+          "enum": [
+            "schema",
+            "paths",
+            "integrity",
+            "labels",
+            "tensors",
+            "runtime",
+            "semantics",
+            "artifacts",
+            "training",
+            "internal"
+          ]
+        },
+        "message": { "type": "string", "minLength": 1, "maxLength": 1024 },
+        "location": { "type": ["string", "null"], "maxLength": 256 },
+        "retryable": { "type": "boolean" }
+      }
+    },
+    "cancelledPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reason"],
+      "properties": {
+        "reason": { "enum": ["user_cancelled", "shutdown", "timeout", "superseded"] },
+        "message": { "type": "string", "minLength": 1, "maxLength": 512 }
+      }
+    }
+  }
+}

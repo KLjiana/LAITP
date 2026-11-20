@@ -1,0 +1,18 @@
+{
+  "weights_version": "1.0",
+  "entries": [
+    {
+      "id": "mobilenet_v3_small-imagenet",
+      "architecture": "mobilenet_v3_small",
+      "source": "torchvision",
+      "source_version": "0.23.0",
+      "url": "https://download.pytorch.org/models/mobilenet_v3_small-047dcff4.pth",
+      "license": "BSD-3-Clause",
+      "sha256": "047dcff4addef86ea5bc2eff13c9614dc11f47ab1160d0a71a25e7db994f4e1f",
+      "size_bytes": 10306551,
+      "local_path": "artifacts/weights/mobilenet_v3_small-047dcff4.pth",
+      "acquired_at": "2026-11-17",
+      "offline_requirement": "训练前必须存在且摘要一致；缺失或摘要不符时立即报错，不得自动下载。"
+    }
+  ]
+}

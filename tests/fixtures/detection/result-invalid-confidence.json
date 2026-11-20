@@ -1,0 +1,14 @@
+{
+  "source_image": "images/batch-1/001.png",
+  "detections": [
+    {
+      "class_id": 0,
+      "label": "水杯",
+      "confidence": 1.25,
+      "x": 120,
+      "y": 80,
+      "w": 200,
+      "h": 260
+    }
+  ]
+}

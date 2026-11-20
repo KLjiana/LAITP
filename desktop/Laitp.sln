@@ -1,0 +1,50 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{45A84A79-3294-4A63-8C9C-3C27E7C52DA7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Laitp.Core", "src\Laitp.Core\Laitp.Core.csproj", "{6F00B133-EFF8-457C-8155-3986D12684F1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Laitp.Desktop", "src\Laitp.Desktop\Laitp.Desktop.csproj", "{63DD6B5C-6246-4380-9319-198EA674B579}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0DF4EA01-5F9D-4AAD-A4DE-AA48270BB236}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Laitp.Core.Checks", "tests\Laitp.Core.Checks\Laitp.Core.Checks.csproj", "{C8879C7F-F31A-4131-9AA6-49500D4D39E3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Laitp.CameraChecks", "tests\Laitp.CameraChecks\Laitp.CameraChecks.csproj", "{586494D0-13B9-4928-8571-A530AFDF4BA9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6F00B133-EFF8-457C-8155-3986D12684F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F00B133-EFF8-457C-8155-3986D12684F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F00B133-EFF8-457C-8155-3986D12684F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F00B133-EFF8-457C-8155-3986D12684F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{63DD6B5C-6246-4380-9319-198EA674B579}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{63DD6B5C-6246-4380-9319-198EA674B579}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{63DD6B5C-6246-4380-9319-198EA674B579}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{63DD6B5C-6246-4380-9319-198EA674B579}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8879C7F-F31A-4131-9AA6-49500D4D39E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8879C7F-F31A-4131-9AA6-49500D4D39E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8879C7F-F31A-4131-9AA6-49500D4D39E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8879C7F-F31A-4131-9AA6-49500D4D39E3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{586494D0-13B9-4928-8571-A530AFDF4BA9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{586494D0-13B9-4928-8571-A530AFDF4BA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{586494D0-13B9-4928-8571-A530AFDF4BA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{586494D0-13B9-4928-8571-A530AFDF4BA9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{6F00B133-EFF8-457C-8155-3986D12684F1} = {45A84A79-3294-4A63-8C9C-3C27E7C52DA7}
+		{63DD6B5C-6246-4380-9319-198EA674B579} = {45A84A79-3294-4A63-8C9C-3C27E7C52DA7}
+		{C8879C7F-F31A-4131-9AA6-49500D4D39E3} = {0DF4EA01-5F9D-4AAD-A4DE-AA48270BB236}
+		{586494D0-13B9-4928-8571-A530AFDF4BA9} = {0DF4EA01-5F9D-4AAD-A4DE-AA48270BB236}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,507 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://laitp.local/schemas/model-manifest.schema.json",
+  "title": "LAITP 模型产物清单（契约 1.x）",
+  "description": "docs/model-contract.md 第 3、4 节的结构约束。文件摘要、标签映射、实际张量、运行时兼容和处理语义由 backend/contracts 校验器补充；Schema 通过不代表产物可用。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "artifact_id",
+    "task",
+    "provenance",
+    "files",
+    "model",
+    "inputs",
+    "outputs",
+    "preprocessing",
+    "postprocessing",
+    "labels",
+    "runtime",
+    "validation"
+  ],
+  "properties": {
+    "contract_version": { "$ref": "#/$defs/contractVersion" },
+    "artifact_id": { "$ref": "#/$defs/identifier" },
+    "task": { "enum": ["image_classification", "object_detection"] },
+    "provenance": { "$ref": "#/$defs/provenanceBase" },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "items": { "$ref": "#/$defs/fileEntry" }
+    },
+    "model": { "$ref": "#/$defs/model" },
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": { "$ref": "#/$defs/inputTensor" }
+    },
+    "outputs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": { "$ref": "#/$defs/outputTensor" }
+    },
+    "preprocessing": { "$ref": "#/$defs/preprocessing" },
+    "postprocessing": { "$ref": "#/$defs/postprocessing" },
+    "labels": { "$ref": "#/$defs/labels" },
+    "runtime": { "$ref": "#/$defs/runtime" },
+    "conversion": { "$ref": "#/$defs/conversion" },
+    "validation": { "$ref": "#/$defs/validation" }
+  },
+  "allOf": [
+    {
+      "if": { "required": ["conversion"] },
+      "then": {
+        "properties": {
+          "provenance": { "$ref": "#/$defs/provenanceWithSource" }
+        }
+      },
+      "else": {
+        "properties": {
+          "provenance": { "$ref": "#/$defs/provenanceTraining" }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "contractVersion": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 15,
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "description": "契约版本 major.minor。支持范围由校验器版本兼容策略决定，Schema 只校验格式。"
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+      "description": "产物、任务、项目等标识：ASCII 字母数字开头，仅含字母数字及 . _ -。"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "小写十六进制 SHA-256，仅用于检查与清单的对应关系。"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^(?![A-Za-z]:)(?!/)(?!.*\\\\)(?!.*//)[^/<>:\"|?*\\x00-\\x1f]+(?:/[^/<>:\"|?*\\x00-\\x1f]+)*$",
+      "description": "以产物包根目录为基准的相对路径，使用 / 分隔；禁止绝对路径、盘符、反斜杠和空路径段。目录穿越、Windows 保留名、末尾空格或点等可移植性问题由校验器补充检查。"
+    },
+    "timestamp": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 35,
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?(Z|[+-][0-9]{2}:[0-9]{2})$",
+      "description": "RFC 3339 时间戳，必须带时区。"
+    },
+    "versionRange": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "pattern": "^(?:(?:>=|<=|==|=|>|<)?[0-9]+(?:\\.[0-9]+){0,2})(?:,(?:>=|<=|==|=|>|<)?[0-9]+(?:\\.[0-9]+){0,2})*$",
+      "description": "逗号分隔的版本比较式，例如 >=1.18.0,<2.0.0；不带比较符表示精确版本。"
+    },
+    "provenanceBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["project_id", "run_id", "dataset_manifest_sha256", "created_at"],
+      "properties": {
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "run_id": { "$ref": "#/$defs/identifier" },
+        "dataset_manifest_sha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "本次训练使用的数据清单/快照摘要。转换产物继承来源包的该摘要，保证仍可追溯到数据。"
+        },
+        "created_at": { "$ref": "#/$defs/timestamp" },
+        "source": { "$ref": "#/$defs/provenanceSource" }
+      }
+    },
+    "provenanceTraining": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["project_id", "run_id", "dataset_manifest_sha256", "created_at"],
+      "properties": {
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "run_id": { "$ref": "#/$defs/identifier" },
+        "dataset_manifest_sha256": { "$ref": "#/$defs/sha256" },
+        "created_at": { "$ref": "#/$defs/timestamp" },
+        "source": { "not": {} }
+      }
+    },
+    "provenanceWithSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["project_id", "run_id", "dataset_manifest_sha256", "created_at", "source"],
+      "properties": {
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "run_id": { "$ref": "#/$defs/identifier" },
+        "dataset_manifest_sha256": { "$ref": "#/$defs/sha256" },
+        "created_at": { "$ref": "#/$defs/timestamp" },
+        "source": { "$ref": "#/$defs/provenanceSource" }
+      }
+    },
+    "provenanceSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "manifest_sha256"],
+      "properties": {
+        "artifact_id": { "$ref": "#/$defs/identifier" },
+        "manifest_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "fileEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "role", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relativePath" },
+        "role": {
+          "enum": [
+            "model",
+            "external_data",
+            "labels",
+            "validation_sample",
+            "reference_output",
+            "thresholds",
+            "calibration"
+          ]
+        },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "size_bytes": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "format", "opset", "external_data"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relativePath" },
+        "format": { "enum": ["onnx"] },
+        "opset": { "type": "integer", "minimum": 7, "maximum": 21 },
+        "ir_version": { "type": "integer", "minimum": 3, "maximum": 12 },
+        "external_data": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/relativePath" },
+          "description": "ONNX 外部数据文件；无外部数据时显式写空数组。"
+        }
+      }
+    },
+    "dimension": {
+      "oneOf": [
+        { "type": "integer", "minimum": 1 },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["min", "max"],
+          "properties": {
+            "name": { "type": "string", "minLength": 1, "maxLength": 32, "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+            "min": { "type": "integer", "minimum": 0 },
+            "max": { "type": "integer", "minimum": 1 }
+          }
+        }
+      ]
+    },
+    "shape": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 6,
+      "items": { "$ref": "#/$defs/dimension" },
+      "description": "静态维度用正整数；动态维度用 {min,max[,name]} 声明允许范围。"
+    },
+    "dtype": {
+      "enum": ["float32", "float16", "int8", "uint8", "int32", "int64"]
+    },
+    "layout": {
+      "enum": ["NCHW", "NHWC", "CHW", "HWC"]
+    },
+    "colorSpace": {
+      "enum": ["RGB", "BGR", "GRAY"]
+    },
+    "quantization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scheme", "scale", "zero_point"],
+      "properties": {
+        "scheme": { "enum": ["per_tensor", "per_channel"] },
+        "scale": { "type": "number", "exclusiveMinimum": 0 },
+        "zero_point": { "type": "integer" },
+        "axis": { "type": "integer" }
+      }
+    },
+    "inputTensor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "shape", "dtype", "layout", "color_space"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "shape": { "$ref": "#/$defs/shape" },
+        "dtype": { "$ref": "#/$defs/dtype" },
+        "layout": { "$ref": "#/$defs/layout" },
+        "color_space": { "$ref": "#/$defs/colorSpace" },
+        "quantization": { "$ref": "#/$defs/quantization" }
+      }
+    },
+    "outputTensor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "shape", "dtype", "meaning"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "shape": { "$ref": "#/$defs/shape" },
+        "dtype": { "$ref": "#/$defs/dtype" },
+        "meaning": {
+          "enum": ["class_logits", "class_probabilities", "raw_detections", "detections"]
+        },
+        "class_axis": { "type": "integer", "minimum": -4, "maximum": 3 },
+        "quantization": { "$ref": "#/$defs/quantization" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "meaning": { "enum": ["class_logits", "class_probabilities"] } }, "required": ["meaning"] },
+          "then": { "required": ["class_axis"] }
+        }
+      ]
+    },
+    "resizeStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "width", "height", "mode", "interpolation"],
+      "properties": {
+        "op": { "const": "resize" },
+        "width": { "type": "integer", "minimum": 1, "maximum": 4096 },
+        "height": { "type": "integer", "minimum": 1, "maximum": 4096 },
+        "mode": { "enum": ["stretch", "letterbox", "crop"] },
+        "interpolation": { "enum": ["nearest", "bilinear", "bicubic", "area"] },
+        "pad_color": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": { "type": "integer", "minimum": 0, "maximum": 255 }
+        },
+        "pad_position": { "enum": ["center", "top_left"] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "mode": { "const": "letterbox" } }, "required": ["mode"] },
+          "then": { "required": ["pad_color", "pad_position"] },
+          "else": {
+            "properties": {
+              "pad_color": { "not": {} },
+              "pad_position": { "not": {} }
+            }
+          }
+        }
+      ]
+    },
+    "normalizeStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "formula", "scale", "mean", "std", "channel_order"],
+      "properties": {
+        "op": { "const": "normalize" },
+        "formula": { "const": "(pixel * scale - mean) / std" },
+        "scale": { "type": "number", "exclusiveMinimum": 0 },
+        "mean": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": { "type": "number", "minimum": 0, "maximum": 1 }
+        },
+        "std": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }
+        },
+        "channel_order": { "$ref": "#/$defs/colorSpace" }
+      }
+    },
+    "transposeStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "from", "to"],
+      "properties": {
+        "op": { "const": "transpose" },
+        "from": { "const": "HWC" },
+        "to": { "const": "CHW" }
+      }
+    },
+    "batchDimensionStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "axis"],
+      "properties": {
+        "op": { "const": "add_batch_dimension" },
+        "axis": { "type": "integer", "minimum": 0, "maximum": 3 }
+      }
+    },
+    "preprocessing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["executor", "source_pixel_range", "steps"],
+      "properties": {
+        "executor": { "enum": ["host", "model", "device"] },
+        "source_pixel_range": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": { "type": "integer", "minimum": 0, "maximum": 255 }
+        },
+        "steps": {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/resizeStep" },
+              { "$ref": "#/$defs/normalizeStep" },
+              { "$ref": "#/$defs/transposeStep" },
+              { "$ref": "#/$defs/batchDimensionStep" }
+            ]
+          }
+        }
+      }
+    },
+    "softmaxStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "axis"],
+      "properties": {
+        "op": { "const": "softmax" },
+        "axis": { "type": "integer", "minimum": -4, "maximum": 3 }
+      }
+    },
+    "postprocessing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["executor", "steps"],
+      "properties": {
+        "executor": { "enum": ["host", "model", "device"] },
+        "steps": {
+          "type": "array",
+          "maxItems": 16,
+          "items": { "$ref": "#/$defs/softmaxStep" }
+        }
+      }
+    },
+    "labels": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "count"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relativePath" },
+        "count": { "type": "integer", "minimum": 2, "maximum": 1024 }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime", "version_range", "platform", "device", "required_capabilities"],
+      "properties": {
+        "runtime": { "enum": ["onnxruntime"] },
+        "version_range": { "$ref": "#/$defs/versionRange" },
+        "platform": { "enum": ["windows-x64", "linux-x64", "k230", "k210"] },
+        "device": { "enum": ["cpu"] },
+        "required_capabilities": {
+          "type": "array",
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": { "enum": ["onnxruntime-cpu", "k230-nnengine", "k210-kpu"] }
+        },
+        "board": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["model", "firmware_range"],
+          "properties": {
+            "model": { "type": "string", "minLength": 1, "maxLength": 64 },
+            "firmware_range": { "$ref": "#/$defs/versionRange" }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "platform": { "enum": ["k230", "k210"] } }, "required": ["platform"] },
+          "then": { "required": ["board"] },
+          "else": { "properties": { "board": { "not": {} } } }
+        }
+      ]
+    },
+    "conversion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["converter", "quantization"],
+      "properties": {
+        "converter": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version"],
+          "properties": {
+            "name": { "type": "string", "minLength": 1, "maxLength": 64 },
+            "version": { "type": "string", "minLength": 1, "maxLength": 32 }
+          }
+        },
+        "quantization": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode"],
+          "properties": {
+            "mode": { "enum": ["none", "dynamic", "static"] },
+            "calibration_manifest_path": { "$ref": "#/$defs/relativePath" },
+            "calibration_manifest_sha256": { "$ref": "#/$defs/sha256" }
+          },
+          "allOf": [
+            {
+              "if": { "properties": { "mode": { "enum": ["dynamic", "static"] } }, "required": ["mode"] },
+              "then": {
+                "required": ["calibration_manifest_sha256"],
+                "allOf": [
+                  {
+                    "if": { "properties": { "mode": { "const": "static" } }, "required": ["mode"] },
+                    "then": { "required": ["calibration_manifest_path"] }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["samples"],
+      "properties": {
+        "samples": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "reference_output"],
+            "properties": {
+              "name": { "type": "string", "minLength": 1, "maxLength": 64 },
+              "path": { "$ref": "#/$defs/relativePath" },
+              "reference_output": { "$ref": "#/$defs/relativePath" }
+            }
+          }
+        },
+        "thresholds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path"],
+          "properties": {
+            "path": { "$ref": "#/$defs/relativePath" }
+          }
+        }
+      }
+    }
+  }
+}

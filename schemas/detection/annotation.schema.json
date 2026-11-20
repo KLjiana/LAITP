@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://laitp.local/schemas/detection/annotation.schema.json",
+  "title": "LAITP 检测标注草案（未激活）",
+  "description": "每图一个标注文件的候选结构，依据 docs/detection-contract-draft.md 第 3 节。草案、未激活：不属于当前契约 1.0，未被 backend/ 加载或引用。越界（x + w <= width、y + h <= height）、class_id 上界、图片实际尺寸一致、重复框等跨字段规则无法用纯 JSON Schema 表达，见同目录 README.md，由后续校验器实现（当前未实现）。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "image",
+    "width",
+    "height",
+    "boxes"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "候选可选字段：每图标注版本。取值格式与是否保留为待决问题 Q7，本草案只要求非空字符串。"
+    },
+    "image": {
+      "$ref": "#/$defs/relativeImagePath"
+    },
+    "width": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "图片解码后的实际像素宽度，必须大于 0；是否与解码结果一致由后续校验器检查。"
+    },
+    "height": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "图片解码后的实际像素高度，必须大于 0；是否与解码结果一致由后续校验器检查。"
+    },
+    "boxes": {
+      "type": "array",
+      "description": "框数组。空数组是否合法为待决问题 Q6，本 Schema 不通过 minItems 预设结论；越界、零面积、重复框规则见 README.md。",
+      "items": {
+        "$ref": "#/$defs/box"
+      }
+    }
+  },
+  "$defs": {
+    "relativeImagePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^(?![A-Za-z]:)(?!/)(?!.*\\\\)(?!.*//)[^/<>:\"|?*\\x00-\\x1f]+(?:/[^/<>:\"|?*\\x00-\\x1f]+)*$",
+      "not": {
+        "pattern": "(^|/)\\.\\.?(/|$)"
+      },
+      "description": "相对于项目数据根的图片路径。结构上禁止绝对路径、盘符、反斜杠、空路径段以及 . / .. 段；Windows 保留名、大小写冲突与符号链接等可移植性问题仍由后续校验器补充检查。"
+    },
+    "box": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "class_id",
+        "x",
+        "y",
+        "w",
+        "h"
+      ],
+      "properties": {
+        "class_id": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "类别 ID，从 0 开始；必须小于类别表长度，上界无法在单文件 Schema 中表达，由后续校验器检查。"
+        },
+        "x": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "框左上角 x 坐标，原图像素，原点在左上角，向右为正。"
+        },
+        "y": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "框左上角 y 坐标，原图像素，原点在左上角，向下为正。"
+        },
+        "w": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "框宽，原图像素，必须大于 0；x + w <= width 由后续校验器检查。"
+        },
+        "h": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "框高，原图像素，必须大于 0；y + h <= height 由后续校验器检查。"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://laitp.local/schemas/dataset-manifest.schema.json",
+  "title": "LAITP 分类数据清单（1.x）",
+  "description": "docs/m0-01-classification-plan.md 第 4 节的数据可追溯要求。文件摘要、类别覆盖、采集批次划分、重复内容与图片可解码性由 backend/classification/dataset.py 补充校验。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "dataset_version",
+    "dataset_id",
+    "task",
+    "created_at",
+    "classes",
+    "samples"
+  ],
+  "properties": {
+    "dataset_version": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 15,
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "description": "数据清单格式版本 major.minor。"
+    },
+    "dataset_id": { "$ref": "#/$defs/identifier" },
+    "task": { "enum": ["image_classification"] },
+    "created_at": { "$ref": "#/$defs/timestamp" },
+    "classes": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 1024,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/className" },
+      "description": "显式有序类别表，数组下标就是类别 ID；禁止加载时排序。"
+    },
+    "samples": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100000,
+      "items": { "$ref": "#/$defs/sample" }
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "timestamp": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 35,
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?(Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "className": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^(?!.*[\\x00-\\x1f\\x7f])\\S(?:.*\\S)?$",
+      "description": "非空且首尾无空白的类别名称，允许中文。"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^(?![A-Za-z]:)(?!/)(?!.*\\\\)(?!.*//)[^/<>:\"|?*\\x00-\\x1f]+(?:/[^/<>:\"|?*\\x00-\\x1f]+)*$",
+      "description": "以数据集根目录为基准的相对路径；目录穿越与 Windows 可移植性由校验器补充检查。"
+    },
+    "sample": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "class_id", "capture_batch", "split"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relativePath" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "class_id": { "type": "integer", "minimum": 0, "maximum": 1023 },
+        "capture_batch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+          "description": "采集批次 ID。同一批次只能出现在一个划分中，避免相邻连拍泄漏到验证集。"
+        },
+        "split": { "enum": ["train", "val", "test"] }
+      }
+    }
+  }
+}

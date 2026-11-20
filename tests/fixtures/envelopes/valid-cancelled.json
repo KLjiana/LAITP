@@ -1,0 +1,13 @@
+{
+  "protocol_version": "1.0",
+  "request_id": "req-20261117-0006",
+  "project_id": "proj-classification-demo",
+  "task_id": "task-20261117-0006",
+  "message_type": "cancelled",
+  "sequence": 7,
+  "artifact_id": null,
+  "payload": {
+    "reason": "user_cancelled",
+    "message": "用户取消训练，临时产物未发布"
+  }
+}

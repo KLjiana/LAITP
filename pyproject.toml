@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "laitp-backend"
+version = "0.1.0"
+description = "LAITP 离线 AI 教学平台后端（契约校验与后续训练推理）"
+requires-python = ">=3.12"
+dependencies = [
+    "jsonschema==4.25.1",
+    "onnx==1.19.1",
+    "onnxruntime>=1.20,<2",
+    "pillow==11.3.0",
+    "torch>=2.8.0,<2.9",
+    "torchvision>=0.23.0,<0.24",
+]
+
+[project.optional-dependencies]
+dev = ["pytest==8.4.2"]
+
+[tool.setuptools.packages.find]
+include = ["backend*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"

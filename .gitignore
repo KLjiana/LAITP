@@ -1,0 +1,21 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+
+# 本地生成物（真实数据、权重、训练输出、性能日志、离线轮子）
+artifacts/
+vendor/
+.venv-offline/
+dist/
+
+# .NET
+.dotnet/
+desktop/**/bin/
+desktop/**/obj/

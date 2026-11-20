@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://laitp.local/schemas/detection/detection-result.schema.json",
+  "title": "LAITP 检测结果草案（未激活）",
+  "description": "单图检测结果的候选结构，依据 docs/detection-contract-draft.md 第 4.1 节。草案、未激活：不属于当前契约 1.0，未被 backend/ 加载或引用。坐标空间、排序、NMS 参数、空结果语义与固定样本匹配规则不在本 Schema 定义，见同目录 README.md。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "source_image",
+    "detections"
+  ],
+  "properties": {
+    "source_image": {
+      "$ref": "#/$defs/relativeImagePath"
+    },
+    "detections": {
+      "type": "array",
+      "description": "检测框数组。成功但无目标时必须是空数组；不得省略字段或写 null。结果顺序与匹配规则不在本 Schema 定义。",
+      "items": {
+        "$ref": "#/$defs/detection"
+      }
+    }
+  },
+  "$defs": {
+    "relativeImagePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^(?![A-Za-z]:)(?!/)(?!.*\\\\)(?!.*//)[^/<>:\"|?*\\x00-\\x1f]+(?:/[^/<>:\"|?*\\x00-\\x1f]+)*$",
+      "not": {
+        "pattern": "(^|/)\\.\\.?(/|$)"
+      },
+      "description": "相对于项目数据根的图片路径。结构上禁止绝对路径、盘符、反斜杠、空路径段以及 . / .. 段；Windows 保留名、大小写冲突与符号链接等可移植性问题仍由后续校验器补充检查。"
+    },
+    "detection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "class_id",
+        "label",
+        "confidence",
+        "x",
+        "y",
+        "w",
+        "h"
+      ],
+      "properties": {
+        "class_id": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "类别 ID，从 0 开始；必须小于类别表长度，上界由后续运行时/校验器检查。"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "显示用冗余字段，必须与 class_id 对应；映射只认 class_id，不得用 label 做映射。"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "0～1 的置信度。数值口径由产物包清单声明，不得由不同后端自行定义。"
+        },
+        "x": {
+          "type": "number",
+          "minimum": 0,
+          "description": "框左上角 x 坐标，数值（允许小数）；坐标空间必须显式声明，草案约定最终结果为原图像素。"
+        },
+        "y": {
+          "type": "number",
+          "minimum": 0,
+          "description": "框左上角 y 坐标，数值（允许小数）；坐标空间必须显式声明，草案约定最终结果为原图像素。"
+        },
+        "w": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "框宽，数值且大于 0；x + w 不越界由后续运行时/校验器保证。"
+        },
+        "h": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "框高，数值且大于 0；y + h 不越界由后续运行时/校验器保证。"
+        }
+      }
+    }
+  }
+}

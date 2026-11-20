@@ -1,0 +1,23 @@
+{
+  "source_image": "images/batch-1/001.png",
+  "detections": [
+    {
+      "class_id": 0,
+      "label": "水杯",
+      "confidence": 0.93,
+      "x": 120,
+      "y": 80,
+      "w": 200,
+      "h": 260
+    },
+    {
+      "class_id": 1,
+      "label": "书本",
+      "confidence": 0.41,
+      "x": 118.5,
+      "y": 79.25,
+      "w": 200.0,
+      "h": 260.5
+    }
+  ]
+}

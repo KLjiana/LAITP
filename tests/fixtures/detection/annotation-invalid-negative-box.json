@@ -1,0 +1,15 @@
+{
+  "version": "0.1-draft",
+  "image": "images/batch-1/001.png",
+  "width": 640,
+  "height": 480,
+  "boxes": [
+    {
+      "class_id": 0,
+      "x": 12,
+      "y": 20,
+      "w": -10,
+      "h": 80
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "classes": ["水杯", "书本"],
+  "dataset_manifest": "data/dataset-manifest.json",
+  "samples": [
+    {
+      "path": "images/水杯/batch-1/001.png",
+      "class_id": 0,
+      "class_name": "水杯",
+      "split": "train",
+      "capture_batch": "batch-1"
+    },
+    {
+      "path": "test-images/书本/batch-1/001.png",
+      "class_id": 1,
+      "class_name": "书本",
+      "split": "test",
+      "capture_batch": "batch-1"
+    }
+  ],
+  "total": 2
+}

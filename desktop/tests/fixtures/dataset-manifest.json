@@ -1,0 +1,30 @@
+{
+  "dataset_version": "1.0",
+  "dataset_id": "ds-fixture-0001",
+  "task": "image_classification",
+  "created_at": "2026-11-17T10:00:00Z",
+  "classes": ["水杯", "书本"],
+  "samples": [
+    {
+      "path": "images/水杯/batch-1/001.png",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "class_id": 0,
+      "capture_batch": "batch-1",
+      "split": "train"
+    },
+    {
+      "path": "images/书本/batch-1/001.png",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "class_id": 1,
+      "capture_batch": "batch-1",
+      "split": "train"
+    },
+    {
+      "path": "test-images/水杯/batch-1/001.png",
+      "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "class_id": 0,
+      "capture_batch": "batch-1",
+      "split": "test"
+    }
+  ]
+}

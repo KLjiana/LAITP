@@ -1,0 +1,41 @@
+{
+  "config_version": "1.0",
+  "status": "not_frozen",
+  "frozen_at": null,
+  "blocked_by": [
+    "目标 Windows 电脑的 CPU、内存、系统版本和课堂时间预算未确认（roadmap 第 10 节第 1 项）",
+    "真实课堂数据未采集，数据集摘要、类别数和样本规模未确定",
+    "目标机上的训练、导出与推理链路复验与效果阈值/数值容差尚未确定（开发机链路已实现并验证）"
+  ],
+  "data": {
+    "dataset_manifest_sha256": null,
+    "dataset_id": null,
+    "classes": null,
+    "splits": null
+  },
+  "training": {
+    "model": "mobilenet_v3_small",
+    "pretrained_weights": "mobilenet_v3_small-imagenet",
+    "input_size": [224, 224],
+    "seed": 20261117,
+    "batch_size": 16,
+    "threads": null,
+    "epochs": 30,
+    "optimizer": "adamw",
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001
+  },
+  "evaluation": {
+    "accuracy_target": null,
+    "per_class_recall_target": null,
+    "logit_abs_tolerance": null,
+    "prediction_agreement": null
+  },
+  "performance": {
+    "train_budget_minutes": null,
+    "load_time_seconds": null,
+    "p95_latency_ms": null,
+    "peak_memory_mb": null
+  },
+  "rules": "所有阈值必须在正式验收运行前填写并冻结。不得在看到失败结果后临时放宽；未填写阈值时只能报告测量结果，不能判定课堂性能达标。"
+}

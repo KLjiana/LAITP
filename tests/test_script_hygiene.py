@@ -53,6 +53,12 @@ def test_run_acceptance_has_all_steps() -> None:
     assert set(ACCEPTANCE_STEPS) <= set(names)
 
 
+def test_ui_flow_has_total_timeout_watchdog() -> None:
+    text = (SCRIPTS / "ui_flow.ps1").read_text(encoding="utf-8-sig")
+    for phrase in ("FlowDeadline", "FlowTimeoutSeconds", "总超时"):
+        assert phrase in text, f"ui_flow.ps1 缺少总超时看门狗标记 {phrase!r}"
+
+
 def test_run_acceptance_has_timeout_and_preflight() -> None:
     text = (SCRIPTS / "run_acceptance.ps1").read_text(encoding="utf-8-sig")
     assert "function Invoke-PowerShellScriptWithTimeout" in text

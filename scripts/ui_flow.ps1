@@ -95,10 +95,13 @@ function Set-ValueChecked {
 function Wait-ButtonEnabled {
     param($Root, [string]$AutomationId, [int]$TimeoutSeconds = 60)
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
-    while ((Get-Date) -lt $deadline) {
+    while ((Get-Date) -lt $deadline -and (Get-Date) -lt $script:FlowDeadline) {
         $element = Find-ById -Root $Root -AutomationId $AutomationId
         if ($element -and $element.Current.IsEnabled) { return }
         Start-Sleep -Milliseconds 300
+    }
+    if ((Get-Date) -ge $script:FlowDeadline) {
+        throw "ui_flow 总超时（$script:FlowTimeoutSeconds s）：等待按钮 $AutomationId"
     }
     throw "按钮 $AutomationId 长时间不可用"
 }
@@ -134,11 +137,14 @@ function Get-ListNames {
 function Wait-Status {    param($Window, [string]$Pattern, [int]$TimeoutSeconds = 240)
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     $last = $null
-    while ((Get-Date) -lt $deadline) {
+    while ((Get-Date) -lt $deadline -and (Get-Date) -lt $script:FlowDeadline) {
         Start-Sleep -Milliseconds 700
         $last = Get-Text -Root $Window -AutomationId "StatusText"
         if ($last -and $last -match $Pattern) { return $last }
         if ($last -and $last -match "失败|未通过|超时") { return $last }
+    }
+    if ((Get-Date) -ge $script:FlowDeadline) {
+        throw "ui_flow 总超时（$script:FlowTimeoutSeconds s）：等待状态 $Pattern（最后状态：$last）"
     }
     return $last
 }
@@ -180,6 +186,8 @@ $result = [ordered]@{
 }
 
 try {
+    $script:FlowTimeoutSeconds = 540
+    $script:FlowDeadline = (Get-Date).AddSeconds($script:FlowTimeoutSeconds)
     $window = $null
     $windowDeadline = (Get-Date).AddSeconds(60)
     while ((Get-Date) -lt $windowDeadline -and -not $window) {

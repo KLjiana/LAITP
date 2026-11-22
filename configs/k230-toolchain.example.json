@@ -1,0 +1,9 @@
+{
+  "_comment": "K230 转换工具链固定版本模板。复制为 configs/k230-toolchain.json 并填入实际验证过的版本；空值或缺失时 scripts/k230_readiness.py 会判定 blocked。不要凭推测填写。",
+  "nncase_version": "",
+  "sdk_version": "",
+  "board_model": "",
+  "calibration_dataset": "",
+  "verified_on": "",
+  "notes": ""
+}

@@ -35,6 +35,9 @@ jobs:
           }
           if ($failed) { exit 1 }
 
+      - name: Documentation consistency
+        run: python scripts/check_docs.py
+
       - name: Tooling and documentation tests
         run: >
           python -m pytest -q

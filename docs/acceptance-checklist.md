@@ -47,7 +47,7 @@
 
 | 编号 | 检查项 | 操作 | 期望 | 当前状态 |
 | --- | --- | --- | --- | --- |
-| A1 | 包完整性 | 解压后运行 `scripts/verify_offline_bundle.py --bundle <zip>`，或包内双击 `check-bundle.bat` / `python\python.exe scripts\verify_offline_bundle.py --extracted .` | 全部文件 SHA-256 匹配；推理/报告/桌面/自检通过 | 开发机已验证（18,171 文件；含包内现场自检通过） |
+| A1 | 包完整性 | 解压后运行 `scripts/verify_offline_bundle.py --bundle <zip>`，或包内双击 `check-bundle.bat` / `python\python.exe scripts\verify_offline_bundle.py --extracted .` | 全部文件 SHA-256 匹配；推理/报告/桌面/自检通过 | 开发机已验证（18,172 文件；含包内现场自检通过） |
 | A2 | 解压与启动 | 双击 `start-desktop.bat` | 桌面窗口出现，状态栏“就绪（环境自检通过）” | 开发机 + UIAutomation 已验证；可用 `ui_smoke.ps1 -Screenshot` 留证（截图见 `artifacts/ui-screenshots/`）；目标机待执行 |
 | A3 | 首次自检 | 点击“环境自检”，或运行 `desktop\app\Laitp.Desktop.exe --self-test self-test.json` | 4 项检查通过；缺 Python 场景能显示失败与提示 | 开发机正向/负向均验证；目标机待执行 |
 | A4 | 新建项目 | 界面填写项目目录/名称/类别，点击“新建并打开” | 状态“已创建并打开项目”，类别显示正确 | 开发机 UIAutomation 已验证；目标机待执行 |

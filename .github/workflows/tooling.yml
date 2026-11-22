@@ -1,0 +1,48 @@
+name: tooling
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  tooling:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependency
+        run: python -m pip install --upgrade pip pytest
+
+      - name: Parse PowerShell scripts
+        shell: pwsh
+        run: |
+          $failed = $false
+          foreach ($script in Get-ChildItem scripts -Filter *.ps1) {
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              $script.FullName, [ref]$null, [ref]$errors)
+            if ($errors.Count -gt 0) {
+              Write-Error "$($script.Name): $($errors.Count) 个解析错误"
+              $failed = $true
+            }
+          }
+          if ($failed) { exit 1 }
+
+      - name: Tooling and documentation tests
+        run: >
+          python -m pytest -q
+          tests/test_tooling.py
+          tests/test_check_state.py
+          tests/test_handoff.py
+          tests/test_script_hygiene.py
+          tests/test_build_bundle.py
+          tests/test_verify_bundle_selfcontained.py
+          tests/test_verify_bundle_checkbundle.py
+          tests/test_verify_offline_bundle_manifest.py

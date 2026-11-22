@@ -60,6 +60,10 @@ py -3.12 -m venv .venv
 
 快速模式 6 个步骤（约 1–2 分钟）：Python 单元测试、桌面构建、Core 检查、验收证据汇总、文档一致性、交付状态自检。结果写入 `artifacts/verify-quick/verify-quick.json` 与 `.txt`。日常小步改动优先用它。
 
+### CI（GitHub Actions）
+
+仓库包含 `.github/workflows/tooling.yml`：在 push / PR 时于 Windows runner 上解析 `scripts/*.ps1`（PowerShell Parser 0 错误）并运行工具/文档测试子集（约 80 项，不安装 torch、不构建桌面、不跑界面自动化）。完整本机验证仍按下方命令在开发机执行。
+
 ### 完整 / 阶段验证
 
 ```powershell

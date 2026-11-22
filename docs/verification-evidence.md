@@ -28,6 +28,7 @@
 | 构建期绝对路径断言（A13 回归） | 构建离线包时自动执行 | 扫描第一方文本（backend/scripts/configs/schemas/demo/desktop 与包根脚本/说明），命中工作区路径/用户目录/`/d/project`/`/mnt/d/project` 即中止构建；3 项 pytest 覆盖；2026-11-23 构建实测通过（无命中） |
 | 依赖与许可说明一致性 | `scripts/check_docs.py`（随文档一致性检查执行） | 解析 `requirements.txt`/`requirements-dev.txt` 的 name==version 固定项，核对 `docs/third-party-notices.md` 是否列出且版本一致；3 项 pytest 覆盖；缺失/不一致会报问题 |
 | K230 转换前置静态探测 | `python scripts/k230_model_probe.py --model <模型包> --output artifacts/k230-probe/*.json` | 只读 ONNX 图事实（算子分布、输入输出形状/动态维度、参数量、opset、manifest SHA 匹配），不运行 nncase、不量化、不接触板卡；3 项 pytest 覆盖；结果不得当作转换或板端验证 |
+| K230 转换启动条件自检 | `python scripts/k230_readiness.py --model <模型包> --output artifacts/k230-probe/*.json` | 检查工具链固定配置、nncase 安装、模型静态输入/算子提示、manifest 摘要与校准数据；本机实测 blocked（缺工具链/nncase/校准数据），模型侧通过；3 项 pytest 覆盖；ready-for-conversion-attempt 仅表示可尝试，不代表转换成功或板端可运行 |
 | GitHub Actions 工具/文档 CI | push 触发 `.github/workflows/tooling.yml`（windows-latest） | 运行成功（2026-11-23：run 45080969289 首次通过；run 45081434292 在新增本地 Parser 检查后通过；run 45082936242 在新增 check_docs 步骤后通过；run 45083395984 在加入 K230 静态探测脚本后通过）：`scripts/*.ps1` PowerShell 解析 0 错误，`scripts/check_docs.py` 文档一致性通过（无 dist 时跳过 SHA/体积），工具/文档测试子集（81 项）通过；不含 torch、桌面构建或界面自动化；完整验证仍以开发机运行结果为准 |
 | PowerShell 解析检查（本地 + CI） | `pytest -q tests/test_script_hygiene.py::test_powershell_scripts_parse` （无 PowerShell 时自动 skip） | 调用 PowerShell Parser 逐个解析 `scripts/*.ps1`，任一语法错误即失败；本地与 GitHub Actions 均执行；与 CI 工作流中的解析步骤互为双保险 |
 | 脚本卫生（BOM/验收结构） | .\.venv\Scripts\python.exe -m pytest tests/test_script_hygiene.py | 所有 scripts/*.ps1 保持 UTF-8 BOM（防止 PS 5.1 解析中文脚本失败）；run_acceptance.ps1 含 11 个环节、超时助手（240/180/420/600/480 s）、单次透明重跑（Retried/FirstExitCode 留痕）、预检清理、包身份与磁盘字段；5 项 pytest 覆盖 |
@@ -35,7 +36,7 @@
 
 日常改动后用 `--quick` 做分钟级检查（只含上表 6 个快速步骤，不跑离线包校验、净环境流程、课堂演练、界面自动化与摄像头）；阶段验收或发布前仍运行完整版 `verify_all.py --ui`（摄像头自动化已按要求停止，不再加 `--camera`）。
 
-当前本机结果：Python 483 项测试通过、桌面构建 0 警告 0 错误、Core 检查 64 项通过、一键验证 16 步通过（摄像头步骤按要求跳过）；验收汇总为“已验证 9 / 部分 4 / 未执行 1（A10）/ 阻塞 1（A15）”。
+当前本机结果：Python 486 项测试通过、桌面构建 0 警告 0 错误、Core 检查 64 项通过、一键验证 16 步通过（摄像头步骤按要求跳过）；验收汇总为“已验证 9 / 部分 4 / 未执行 1（A10）/ 阻塞 1（A15）”。
 
 ## 2. 离线包
 
@@ -90,7 +91,7 @@
 
 | 领域 | 命令 | 产物/依据 |
 | --- | --- | --- |
-| 契约 Schema 与拒绝场景 | `.\.venv\Scripts\python.exe -m pytest -q` | 483 项测试 |
+| 契约 Schema 与拒绝场景 | `.\.venv\Scripts\python.exe -m pytest -q` | 486 项测试 |
 | M0 基准（训练/导出/延迟/内存） | `.\.venv\Scripts\python.exe -m benchmarks.m0_benchmark --output artifacts\benchmark-m0` | `artifacts/benchmark-m0/m0-benchmark.json` |
 | 离线环境基准 | `.\.venv-offline\Scripts\python.exe -m benchmarks.m0_benchmark --output artifacts\benchmark-m0-offline` | `artifacts/benchmark-m0-offline/m0-benchmark.json` |
 | 真实公开数据（Fashion-MNIST 3 类） | `.\.venv\Scripts\python.exe scripts\real_data_validation.py` | `artifacts/real-data/result.json`（准确率约 0.917，产物 `art-run-real-0001`） |
@@ -113,7 +114,7 @@
 | 项目 | 值 |
 | --- | --- |
 | 精简包 | `dist/laitp-offline-lean.zip`，SHA-256 见同名 `.sha256` 文件 |
-| Python 测试 | 483 passed |
+| Python 测试 | 486 passed |
 | Core 检查 | 64 项通过 |
 | 一键验证 | 16 步通过（摄像头步骤按要求跳过） |
 | 真实数据准确率 | 约 0.917（Fashion-MNIST 3 类，构造划分） |

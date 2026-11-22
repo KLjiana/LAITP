@@ -70,6 +70,7 @@
 - 行 JSON 任务协议与超时/取消/迟到消息处理：可作为板端任务适配的参考。
 - 离线打包与包内自检机制：可扩展为“板端转换工具 + 固件”的离线分发。
 - **ONNX 静态图探测（2026-11-23）**：`scripts/k230_model_probe.py` 可读取模型契约 1.0 的模型包（按 `files[role=model]` 定位 ONNX），输出算子分布、输入输出形状/动态维度、参数量、ONNX opset、manifest SHA-256 是否匹配等 JSON。以本机真实数据训练产物实测：MobileNetV3 结构 **922,683 参数**、输入 `[1,3,224,224]` 静态、算子以 Conv(52)/HardSwish(18)/Relu(14) 等为主、无 `NonMaxSuppression`/`GridSample` 等需人工核对算子、manifest 摘要匹配。该结果**只是转换前置事实**，不代表已通过 nncase 转换或板端运行；仍需按第 4 节门槛在指定工具链上验证。
+- **启动条件自检脚本（2026-11-23）**：`scripts/k230_readiness.py` 把启动条件变成可复现清单（工具链版本配置 `configs/k230-toolchain.json`、nncase 是否安装、模型静态输入/算子提示、manifest 摘要、校准数据数量），输出 `blocked` 或 `ready-for-conversion-attempt`。本机真实模型自检结果：**blocked**（缺工具链固定配置、nncase、校准数据），模型侧三项通过（静态输入 `[1,3,224,224]`、922,683 参数、无高危算子提示、manifest 摘要匹配）。
 
 ## 7. 结论
 

@@ -152,6 +152,7 @@ teacher-quickstart.md    老师快速上手
 acceptance-card.md       目标机验收操作卡（一页版）
 acceptance-checklist.md  目标机离线验收清单
 verification-evidence.md 开发机验证命令与证据索引
+known-limitations.md     已知限制与验收边界
 {f"acceptance-report-sample.md 开发机一键验收报告样例" + chr(10) if report.is_file() else ""}handoff-manifest.json    本目录清单（文件、大小、SHA-256）
 
 已知限制（{today}）

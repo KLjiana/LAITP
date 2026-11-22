@@ -153,7 +153,7 @@ def check_handoff_documents(
     handoff_dir: Path | None = None,
     manifest: dict | None = None,
 ) -> dict:
-    """核对交接目录中的 README.md 与四份 docs 副本是否与仓库最新内容一致。
+    """核对交接目录中的 README.md 与六份 docs 副本是否与仓库最新内容一致。
 
     - 仓库文件与交接副本都存在时按 SHA-256 比较，不一致记为 problem，
       并提示重新运行 ``scripts/make_handoff.py``；

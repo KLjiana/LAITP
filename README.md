@@ -77,7 +77,7 @@ py -3.12 -m venv .venv
 
 - `laitp-offline-lean.zip`：**精简包**（内置便携 Python + 自包含桌面，不含 wheel，依赖已在包内）；
 - `laitp-offline-full.zip`：**完整包**（额外包含 wheel，用于目标机首次部署或依赖修复）；
-- 两个包的 `.sha256`、`README.md`、`teacher-quickstart.md`、`acceptance-card.md`、`acceptance-checklist.md`、`verification-evidence.md`、`acceptance-report-sample.md`、`交接说明.txt`、`handoff-manifest.json`。
+- 两个包的 `.sha256`、`README.md`、`teacher-quickstart.md`、`acceptance-card.md`、`acceptance-checklist.md`、`verification-evidence.md`、`known-limitations.md`、`acceptance-report-sample.md`、`交接说明.txt`、`handoff-manifest.json`。
 
 使用流程（教师 / 目标机）：
 

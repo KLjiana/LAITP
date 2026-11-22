@@ -86,11 +86,12 @@
 | M0 基准（训练/导出/延迟/内存） | `.\.venv\Scripts\python.exe -m benchmarks.m0_benchmark --output artifacts\benchmark-m0` | `artifacts/benchmark-m0/m0-benchmark.json` |
 | 离线环境基准 | `.\.venv-offline\Scripts\python.exe -m benchmarks.m0_benchmark --output artifacts\benchmark-m0-offline` | `artifacts/benchmark-m0-offline/m0-benchmark.json` |
 | 真实公开数据（Fashion-MNIST 3 类） | `.\.venv\Scripts\python.exe scripts\real_data_validation.py` | `artifacts/real-data/result.json`（准确率约 0.917，产物 `art-run-real-0001`） |
-> 最近复测：2026-11-20 复测 stage 16.0 s / 30 张预测 17.0 s（含预测合计约 33.0 s），训练阶段 6.2 s；数字随负载波动，以 `artifacts/classroom-rehearsal/result.json` 为准。
 | 净环境离线流程 | `.\.venv\Scripts\python.exe scripts\verify_offline_flow.py --clean-env` | `artifacts/offline-clean-env-result.json` |
 | 摄像头底层探针 | `.\.dotnet\dotnet.exe run --project desktop\tests\Laitp.CameraChecks -v quiet -- --preview artifacts\camera-preview-probe.json` | `artifacts/camera-preview-probe.json`（约 20 fps，Bgra8 1280×720） |
 | 摄像头单张采集 | `.\.dotnet\dotnet.exe run --project desktop\tests\Laitp.CameraChecks -v quiet` | `artifacts/camera-capture.png` |
 | Core 检查（C#） | `.\.dotnet\dotnet.exe run --project desktop\tests\Laitp.Core.Checks -v quiet` | 64 项通过 |
+
+> 最近复测：2026-11-20 复测 stage 16.0 s / 30 张预测 17.0 s（含预测合计约 33.0 s），训练阶段 6.2 s；数字随负载波动，以 `artifacts/classroom-rehearsal/result.json` 为准。
 
 ## 5. 目标机验收留证建议
 
@@ -99,7 +100,7 @@
 3. 摄像头项额外保存 `ui_camera.ps1 -Screenshot` 生成的预览截图。
 4. 将 `artifacts/` 与验收记录一并归档；`artifacts/` 不在版本库中，需单独备份。
 
-## 6. 当前证据快照（2026-11-20）
+## 6. 当前证据快照（2026-11-23）
 
 | 项目 | 值 |
 | --- | --- |

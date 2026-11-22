@@ -52,6 +52,41 @@ def check_start_script(extracted: Path) -> list[str]:
     return problems
 
 
+def check_manifest_environment_claims(extracted: Path, manifest: dict) -> list[str]:
+    """核对 manifest.environment 的声明与包内实际情况一致。"""
+    environment = manifest.get("environment")
+    if not isinstance(environment, dict):
+        return []
+    problems: list[str] = []
+    platform = environment.get("platform")
+    if platform is not None and platform != "windows-x64":
+        problems.append(f"manifest 声明的 platform 不是 windows-x64：{platform!r}")
+    claimed_python = environment.get("python_embedded")
+    actual_python = (extracted / "python" / "python.exe").is_file()
+    if isinstance(claimed_python, bool) and claimed_python != actual_python:
+        problems.append(
+            f"manifest 声明 python_embedded={claimed_python}，包内实际为 {actual_python}"
+        )
+    claimed_desktop = environment.get("desktop_self_contained")
+    app_dir = extracted / "desktop" / "app"
+    runtimeconfig = app_dir / "Laitp.Desktop.runtimeconfig.json"
+    actual_desktop = False
+    if runtimeconfig.is_file():
+        try:
+            config = json.loads(runtimeconfig.read_text(encoding="utf-8"))
+            actual_desktop = bool(
+                (config.get("runtimeOptions") or {}).get("includedFrameworks")
+            )
+        except (OSError, ValueError):
+            actual_desktop = False
+    if isinstance(claimed_desktop, bool) and claimed_desktop != actual_desktop:
+        problems.append(
+            "manifest 声明 desktop_self_contained="
+            f"{claimed_desktop}，包内实际为 {actual_desktop}"
+        )
+    return problems
+
+
 def check_check_bundle_script(extracted: Path) -> list[str]:
     """校验一键自检脚本调用包内 Python，并切换到 UTF-8 代码页。
 
@@ -315,6 +350,10 @@ def main(argv: list[str] | None = None) -> int:
         dev_path_scan_paths = set(manifest_files) | {
             "start-desktop.bat", "check-bundle.bat", "README.txt",
         }
+        environment_issues = check_manifest_environment_claims(extracted, manifest)
+        failures.extend(environment_issues)
+        if not environment_issues:
+            checks.append("manifest 环境声明与包内实际一致")
         dev_path_issues = find_development_path_references(extracted, dev_path_scan_paths)
         failures.extend(dev_path_issues)
         if not dev_path_issues:

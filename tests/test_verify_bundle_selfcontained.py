@@ -144,3 +144,53 @@ def test_development_path_scan_ignores_pycache_and_pyc(tmp_path: Path) -> None:
     )
 
     assert verifier.find_development_path_references(tmp_path) == []
+
+def test_manifest_environment_claims_match_bundle(tmp_path: Path) -> None:
+    verifier = load_verifier()
+    module = load_verifier()
+    _make_desktop(tmp_path, included=True)
+    (tmp_path / "python").mkdir()
+    (tmp_path / "python" / "python.exe").write_bytes(b"exe")
+    manifest = {
+        "environment": {
+            "platform": "windows-x64",
+            "python_embedded": True,
+            "desktop_self_contained": True,
+        }
+    }
+
+    assert module.check_manifest_environment_claims(tmp_path, manifest) == []
+
+
+def test_manifest_environment_claims_report_python_mismatch(tmp_path: Path) -> None:
+    module = load_verifier()
+    _make_desktop(tmp_path, included=True)
+    manifest = {
+        "environment": {
+            "platform": "windows-x64",
+            "python_embedded": True,
+            "desktop_self_contained": True,
+        }
+    }
+
+    problems = module.check_manifest_environment_claims(tmp_path, manifest)
+
+    assert len(problems) == 1
+    assert "python_embedded" in problems[0]
+
+
+def test_manifest_environment_claims_report_desktop_mismatch(tmp_path: Path) -> None:
+    module = load_verifier()
+    _make_desktop(tmp_path, included=False)
+    manifest = {
+        "environment": {
+            "platform": "windows-x64",
+            "python_embedded": False,
+            "desktop_self_contained": True,
+        }
+    }
+
+    problems = module.check_manifest_environment_claims(tmp_path, manifest)
+
+    assert len(problems) == 1
+    assert "desktop_self_contained" in problems[0]

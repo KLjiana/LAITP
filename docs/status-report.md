@@ -26,7 +26,7 @@ A1–A15 的逐项状态、证据与剩余动作（本机待做/目标机待做/
 
 | 验证 | 命令 | 结果 |
 | --- | --- | --- |
-| Python 单元测试 | `.venv\Scripts\python.exe -m pytest -q` | **474 passed** |
+| Python 单元测试 | `.venv\Scripts\python.exe -m pytest -q` | **477 passed** |
 | 桌面构建 | `.dotnet\dotnet.exe build desktop\Laitp.sln` | 0 警告 0 错误 |
 | Core 检查 | `.dotnet\dotnet.exe run --project desktop\tests\Laitp.Core.Checks` | **64 项通过** |
 | 一键验证 | `.venv\Scripts\python.exe scripts\verify_all.py --ui` | **16 步通过（摄像头步骤按要求跳过）**（约 10 分钟，`artifacts/verify-all/verify-all.json`） |
@@ -48,14 +48,14 @@ A1–A15 的逐项状态、证据与剩余动作（本机待做/目标机待做/
 | M3 准备（规划） | [K230 板端可行性准备](k230-feasibility.md) | 前置条件、未知项、验证门槛与所需外部输入；**未实现、未验证** |
 | 文档一致性 | `scripts/check_docs.py` | 核对包 SHA/体积、测试数、Core 数、验证步数与过期缩写 SHA（本机通过） |
 | 交付状态自检 | `scripts/check_state.py` | 11 项一致：包 SHA/体积、交接目录、最近验证、验收汇总、长时间预览稳定性、文档一致性、交接验收报告样例、交接目录文档与仓库一致（README.md 与 teacher-quickstart/acceptance-card/acceptance-checklist/verification-evidence/known-limitations 六份）（本机通过） |
-| 包内一键验收（2026-11-23，正式包，11 环节） | 解压后 `run_acceptance.ps1 -IncludeFlow -IncludeExtended` | **11 个环节全部通过，未使用重试**（自检 30.2 s、窗口 11.2 s、启动 3.0 s、演示数据 0.2 s、新建导入 25.0 s、训练预测 29.1 s、保存恢复 40.8 s、数据体检 0.3 s、批量历史汇总 0.2 s、严格验收（正向）0.5 s、自检幂等性复核 27.5 s）；**中文+空格路径 + CP936 控制台**，非提权进程；包内已含“目标机验收操作卡”、“已知限制与验收边界”与“第三方组件与许可说明”；构建期与包内自检均执行开发机路径检查；报告含“包身份”（18,172 文件）、CPU/内存/磁盘余量、长路径支持状态与包目录长度；训练预测含界面批量预测（4 张/50.0%）与模型对比（A 50.0% / B 0.0%，标签不同出现不可比警告，属预期）；摄像头按要求未测试 |
+| 包内一键验收（2026-11-23，正式包，11 环节） | 解压后 `run_acceptance.ps1 -IncludeFlow -IncludeExtended` | **11 个环节全部通过，未使用重试**（自检 26.1 s、窗口 10.8 s、启动 2.5 s、演示数据 0.1 s、新建导入 22.9 s、训练预测 29.6 s、保存恢复 41.4 s、数据体检 0.3 s、批量历史汇总 0.2 s、严格验收（正向）0.5 s、自检幂等性复核 24.8 s）；**中文+空格路径 + CP936 控制台**，非提权进程；包内已含“目标机验收操作卡”、“已知限制与验收边界”与“第三方组件与许可说明”；包内自检含开发机路径扫描与 manifest 环境声明一致性检查；报告含“包身份”（18,172 文件）、CPU/内存/磁盘余量、长路径支持状态与包目录长度；训练预测含界面批量预测（4 张/50.0%）与模型对比（A 50.0% / B 0.0%，标签不同出现不可比警告，属预期）；摄像头按要求未测试 |
 | 控制台编码兼容（2026-11-19） | `chcp 936` 控制台运行一键验收 | 修复后同一临时包在 CP936 与默认环境均 **11/11 通过**（第 8/9/10 步 JSON 解析正常）；旧版在中文控制台会误报失败 |
 | 周期复核（2026-11-18，摄像头关闭后） | `scripts/verify_all.py --ui` + `check_state.py` | **16 步通过**（摄像头步骤按用户要求跳过，不再运行 `--camera`）；状态自检通过（当时 10 项；当前 11 项） |
 | 完整一键验证（2026-11-23 复验） | `.\\.venv\\Scripts\\python.exe scripts\\verify_all.py --ui` | **16 步通过（15 PASS + 1 SKIP：界面摄像头拍照导入按用户要求跳过；共 17 条记录）**，约 8 分钟；含离线包校验（清单卫生/桌面自包含/启动脚本/check-bundle 检查/开发机路径扫描）、净环境流程、课堂演练、界面闭环、另存为/归档+最近项目、新建导入、批量导入、保存恢复、历史导出、项目编辑+严格验收 |
 | 界面截图 | `ui_smoke.ps1 -Screenshot` / `ui_camera.ps1 -Screenshot` | 窗口截图（`artifacts/ui-screenshots/`）可见标题、摄像头行与状态；摄像头截图见 DroidCam 预览画面与“预览中（21.2 fps，178 帧）”、类别/拍照/连拍控件 |
 | 启动耗时 | `scripts/measure_startup.ps1` | 自包含桌面暖启动窗口 1.72 s、自检完成 1.99 s；解包目录暖启动窗口 0.83 s、自检完成 1.59 s（首次窗口 5.11 s） |
-| 离线包 | 精简包 `dist/laitp-offline-lean.zip` | 278,924,305 B，SHA-256 `fb80bb23…b6e3bd08`；18,172 文件摘要匹配、推理/报告/桌面/自检/摄像头设备选择·拍照·连拍·高帧率预览均验证；包内自带现场自检脚本、`check-bundle.bat` 与老师快速上手文档 |
-| 完整包 | `dist/laitp-offline-full.zip` | 950,145,012 B（约 906 MiB），SHA-256 `2bfed005…193ee852`；18,206 文件（含 33 个 wheel）摘要匹配、包内 Python 导入/推理/报告/桌面启动/自检均通过 |
+| 离线包 | 精简包 `dist/laitp-offline-lean.zip` | 278,924,804 B，SHA-256 `36bddb4c…1b86c700f`；18,172 文件摘要匹配、推理/报告/桌面/自检/摄像头设备选择·拍照·连拍·高帧率预览均验证；包内自带现场自检脚本、`check-bundle.bat` 与老师快速上手文档 |
+| 完整包 | `dist/laitp-offline-full.zip` | 950,145,495 B（约 906 MiB），SHA-256 `b2f24365…061db0d7`；18,206 文件（含 33 个 wheel）摘要匹配、包内 Python 导入/推理/报告/桌面启动/自检均通过 |
 
 补充（2026-11-19）：包内一键验收已扩展为 11 环节，新增第 10 步“严格验收（正向）”与第 11 步“自检幂等性复核”（用包内 Python 对流程项目执行 `backend.project check-dataset --require-test --min-train/val/test`，验证严格验收正向链路；链路验证阈值，非课堂验收门槛）。上表 11 环节为当前状态；扩展前正式包曾实测 9/9 通过（2026-11-19，历史记录），扩展后 11 步正式包已实测 11/11 通过。
 

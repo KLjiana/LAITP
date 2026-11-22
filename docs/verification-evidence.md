@@ -27,6 +27,7 @@
 | 包内第一方文本绝对路径扫描（A13 回归） | 包内自检（`python\python.exe scripts\verify_offline_bundle.py --extracted .`） | 扫描范围限 `manifest.json` 列出的第一方文件与包根脚本（跳过 `docs/`、`README.md`、`manifest.json` 与二进制）；命中工作区路径/用户目录/`/d/project`/`/mnt/d/project` 即失败；运行时生成产物不在清单内，重复自检幂等；4 项 pytest 覆盖 |
 | 构建期绝对路径断言（A13 回归） | 构建离线包时自动执行 | 扫描第一方文本（backend/scripts/configs/schemas/demo/desktop 与包根脚本/说明），命中工作区路径/用户目录/`/d/project`/`/mnt/d/project` 即中止构建；3 项 pytest 覆盖；2026-11-23 构建实测通过（无命中） |
 | 依赖与许可说明一致性 | `scripts/check_docs.py`（随文档一致性检查执行） | 解析 `requirements.txt`/`requirements-dev.txt` 的 name==version 固定项，核对 `docs/third-party-notices.md` 是否列出且版本一致；3 项 pytest 覆盖；缺失/不一致会报问题 |
+| GitHub Actions 工具/文档 CI | push 触发 `.github/workflows/tooling.yml`（windows-latest） | 首次运行成功（run 45080969289，2026-11-23）：`scripts/*.ps1` 全部通过 PowerShell 解析（0 错误），工具/文档测试子集 80 项通过；不含 torch、桌面构建或界面自动化；完整验证仍以开发机运行结果为准 |
 | 脚本卫生（BOM/验收结构） | .\.venv\Scripts\python.exe -m pytest tests/test_script_hygiene.py | 所有 scripts/*.ps1 保持 UTF-8 BOM（防止 PS 5.1 解析中文脚本失败）；run_acceptance.ps1 含 11 个环节、超时助手（240/180/420/600/480 s）、单次透明重跑（Retried/FirstExitCode 留痕）、预检清理、包身份与磁盘字段；5 项 pytest 覆盖 |
 | 交付状态快速自检 | `.\.venv\Scripts\python.exe scripts\check_state.py` | 约 1 秒：包 SHA/体积入文档并轻量校验 ZIP 内 manifest/自包含/启动脚本结构（不替代完整解包校验）、交接目录 SHA 与文件、最近一键验证、验收汇总、长时间预览稳定性、文档一致性、交接验收报告样例、交接目录文档与仓库一致共 11 项 |
 

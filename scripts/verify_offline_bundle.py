@@ -121,6 +121,77 @@ def check_desktop_self_contained(extracted: Path) -> list[str]:
     return problems
 
 
+DEVELOPMENT_PATH_MARKERS = (
+    "d:\\project",
+    "d:/project",
+    "/d/project",
+    "/mnt/d/project",
+    "c:\\users\\kl_jiana",
+    "c:/users/kl_jiana",
+)
+def development_path_markers() -> list[str]:
+    markers = list(DEVELOPMENT_PATH_MARKERS)
+    for marker in list(markers):
+        if '\\' in marker:
+            markers.append(marker.replace('\\', '\\\\'))
+    return markers
+
+
+DEV_PATH_SCAN_PREFIXES = ("backend/", "scripts/", "configs/", "schemas/", "demo/", "desktop/")
+DEV_PATH_SCAN_EXCLUDED_FILES = (
+    "README.md",
+    "manifest.json",
+    # 该脚本自身定义开发机路径标记常量，需豁免
+    "scripts/build_offline_bundle.py",
+    "scripts/verify_offline_bundle.py",
+)
+DEV_PATH_BINARY_SUFFIXES = (
+    ".zip", ".dll", ".pyd", ".whl", ".pt", ".pth", ".onnx", ".pb", ".so",
+    ".exe", ".png", ".jpg", ".jpeg", ".gif", ".ico", ".gz", ".tar",
+)
+
+
+def find_development_path_references(
+    extracted: Path, relative_paths: set[str] | None = None
+) -> list[str]:
+    """校验包内第一方文本不含开发机绝对路径（A13 回归检查）。
+
+    ``relative_paths`` 为待扫描的包内相对路径集合（通常取 manifest 列出的文件 +
+    包根元数据）。未提供时按后端/脚本/配置/演示/桌面范围遍历；运行时生成的自检
+    结果、验收输出等不在 manifest 中，因此不会被误报。
+    """
+    if relative_paths is None:
+        on_disk: set[str] = set()
+        for path in extracted.rglob("*"):
+            if path.is_file():
+                on_disk.add(path.relative_to(extracted).as_posix())
+        relative_paths = on_disk
+    problems: list[str] = []
+    for relative in sorted(relative_paths):
+        relative = relative.replace("\\", "/")
+        is_root_file = "/" not in relative
+        if not is_root_file and not relative.startswith(DEV_PATH_SCAN_PREFIXES):
+            continue
+        if relative in DEV_PATH_SCAN_EXCLUDED_FILES:
+            continue
+        path = extracted / relative
+        if not path.is_file():
+            continue
+        if "__pycache__" in path.parts:
+            continue
+        suffix = path.suffix.lower()
+        if suffix in (".pyc", ".pyo") or suffix in DEV_PATH_BINARY_SUFFIXES:
+            continue
+        try:
+            content = path.read_text(encoding="utf-8", errors="ignore").lower()
+        except OSError:
+            continue
+        for marker in development_path_markers():
+            if marker in content:
+                problems.append(f"{relative} 含开发机绝对路径标记 {marker}")
+                break
+    return problems
+
 def find_manifest_hygiene_issues(files: list[str]) -> list[str]:
     """检查清单路径是否包含缓存或编译产物。
 
@@ -241,6 +312,13 @@ def main(argv: list[str] | None = None) -> int:
         failures.extend(check_bundle_issues)
         if not check_bundle_issues:
             checks.append("自检脚本 check-bundle.bat 内容正确")
+        dev_path_scan_paths = set(manifest_files) | {
+            "start-desktop.bat", "check-bundle.bat", "README.txt",
+        }
+        dev_path_issues = find_development_path_references(extracted, dev_path_scan_paths)
+        failures.extend(dev_path_issues)
+        if not dev_path_issues:
+            checks.append("第一方文本不含开发机绝对路径")
         desktop_issues = check_desktop_self_contained(extracted)
         failures.extend(desktop_issues)
         if not desktop_issues:

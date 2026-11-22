@@ -194,7 +194,13 @@ BINARY_SUFFIXES = (
 DEV_PATH_SCAN_INCLUDED_PREFIXES = (
     "backend/", "scripts/", "configs/", "schemas/", "demo/", "desktop/",
 )
-DEV_PATH_SCAN_EXCLUDED_FILES = ("README.md", "manifest.json")
+DEV_PATH_SCAN_EXCLUDED_FILES = (
+    "README.md",
+    "manifest.json",
+    # 该脚本自身定义开发机路径标记常量，需豁免
+    "scripts/build_offline_bundle.py",
+    "scripts/verify_offline_bundle.py",
+)
 
 
 def development_path_markers() -> list[str]:
@@ -204,6 +210,10 @@ def development_path_markers() -> list[str]:
         for form in (str(candidate), candidate.as_posix()):
             markers.append(form)
     markers.extend(["/d/project", "/mnt/d/project"])
+    # JSON/Python 源码中开发机路径常被双反斜杠转义，需同时检查该形式。
+    for marker in list(markers):
+        if "\\" in marker:
+            markers.append(marker.replace("\\", "\\\\"))
     unique: list[str] = []
     for marker in markers:
         if marker and marker.lower() not in [item.lower() for item in unique]:

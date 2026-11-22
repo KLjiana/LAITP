@@ -101,3 +101,46 @@ def test_start_script_pointing_to_bin_is_reported(tmp_path: Path) -> None:
 def test_missing_start_script_is_reported(tmp_path: Path) -> None:
     verifier = load_verifier()
     assert verifier.check_start_script(tmp_path) == ["缺少启动脚本：start-desktop.bat"]
+
+def _write_text(root: Path, relative: str, content: str) -> None:
+    target = root / relative
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(content, encoding="utf-8")
+
+
+def test_development_path_scan_passes_for_clean_bundle(tmp_path: Path) -> None:
+    verifier = load_verifier()
+    _write_text(tmp_path, "backend/runtime/worker.py", "print('ok')\n")
+    _write_text(tmp_path, "start-desktop.bat", "start desktop\\app\\Laitp.Desktop.exe\r\n")
+
+    assert verifier.find_development_path_references(tmp_path) == []
+
+
+def test_development_path_scan_reports_first_party_reference(tmp_path: Path) -> None:
+    verifier = load_verifier()
+    _write_text(
+        tmp_path, "configs/broken.json", '{"root": "D:\\\\project\\\\Python\\\\LAITP"}\n'
+    )
+
+    problems = verifier.find_development_path_references(tmp_path, {"configs/broken.json"})
+
+    assert len(problems) == 1
+    assert "configs/broken.json" in problems[0]
+
+
+def test_development_path_scan_ignores_docs_and_readme(tmp_path: Path) -> None:
+    verifier = load_verifier()
+    _write_text(tmp_path, "docs/example.md", "示例 C:\\\\Users\\\\KL_jiana\\\\LAITP\n")
+    _write_text(tmp_path, "README.md", "示例 /d/project\n")
+
+    assert verifier.find_development_path_references(tmp_path) == []
+
+def test_development_path_scan_ignores_pycache_and_pyc(tmp_path: Path) -> None:
+    verifier = load_verifier()
+    cache = tmp_path / "backend" / "__pycache__"
+    cache.mkdir(parents=True)
+    (cache / "worker.cpython-312.pyc").write_bytes(
+        b"\x00C:\\Users\\KL_jiana\\AppData\\" + b"\x00"
+    )
+
+    assert verifier.find_development_path_references(tmp_path) == []

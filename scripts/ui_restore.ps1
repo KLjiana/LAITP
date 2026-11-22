@@ -53,11 +53,14 @@ function Wait-Text {
     param($Window, [string]$AutomationId, [string]$Pattern, [int]$TimeoutSeconds = 120)
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     $last = $null
-    while ((Get-Date) -lt $deadline) {
+    while ((Get-Date) -lt $deadline -and (Get-Date) -lt $script:FlowDeadline) {
         Start-Sleep -Milliseconds 500
         $last = Get-Text -Root $Window -AutomationId $AutomationId
         if ($last -and $last -match $Pattern) { return $last }
         if ($last -and $last -match "失败|超时") { return $last }
+    }
+    if ((Get-Date) -ge $script:FlowDeadline) {
+        throw "ui 流程总超时（$script:FlowTimeoutSeconds s）：等待状态 $Pattern（最后状态：$last）"
     }
     return $last
 }
@@ -95,10 +98,13 @@ function Set-ValueChecked {
 function Wait-ButtonEnabled {
     param($Root, [string]$AutomationId, [int]$TimeoutSeconds = 60)
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
-    while ((Get-Date) -lt $deadline) {
+    while ((Get-Date) -lt $deadline -and (Get-Date) -lt $script:FlowDeadline) {
         $element = Find-ById -Root $Root -AutomationId $AutomationId
         if ($element -and $element.Current.IsEnabled) { return }
         Start-Sleep -Milliseconds 300
+    }
+    if ((Get-Date) -ge $script:FlowDeadline) {
+        throw "ui 流程总超时（$script:FlowTimeoutSeconds s）：等待按钮 $AutomationId"
     }
     throw "按钮 $AutomationId 长时间不可用"
 }
@@ -108,11 +114,14 @@ function Wait-TextChanged {
           [int]$TimeoutSeconds = 120)
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     $last = $null
-    while ((Get-Date) -lt $deadline) {
+    while ((Get-Date) -lt $deadline -and (Get-Date) -lt $script:FlowDeadline) {
         Start-Sleep -Milliseconds 500
         $last = Get-Text -Root $Window -AutomationId $AutomationId
         if ($last -and $last -ne $Previous -and $last -match $Pattern) { return $last }
         if ($last -and $last -ne $Previous -and $last -match "失败|超时") { return $last }
+    }
+    if ((Get-Date) -ge $script:FlowDeadline) {
+        throw "ui 流程总超时（$script:FlowTimeoutSeconds s）：等待状态 $Pattern（最后状态：$last）"
     }
     return $last
 }
@@ -168,6 +177,8 @@ $result = [ordered]@{
 }
 
 try {
+    $script:FlowTimeoutSeconds = 420
+    $script:FlowDeadline = (Get-Date).AddSeconds($script:FlowTimeoutSeconds)
     # ---- 第一阶段：新建、导入、训练 ----
     $first = Open-Window -ExePath $exePath
     $window = $first.Window

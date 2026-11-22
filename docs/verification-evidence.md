@@ -32,7 +32,7 @@
 
 日常改动后用 `--quick` 做分钟级检查（只含上表 6 个快速步骤，不跑离线包校验、净环境流程、课堂演练、界面自动化与摄像头）；阶段验收或发布前仍运行完整版 `verify_all.py --ui`（摄像头自动化已按要求停止，不再加 `--camera`）。
 
-当前本机结果：Python 478 项测试通过、桌面构建 0 警告 0 错误、Core 检查 64 项通过、一键验证 16 步通过（摄像头步骤按要求跳过）；验收汇总为“已验证 9 / 部分 4 / 未执行 1（A10）/ 阻塞 1（A15）”。
+当前本机结果：Python 479 项测试通过、桌面构建 0 警告 0 错误、Core 检查 64 项通过、一键验证 16 步通过（摄像头步骤按要求跳过）；验收汇总为“已验证 9 / 部分 4 / 未执行 1（A10）/ 阻塞 1（A15）”。
 
 ## 2. 离线包
 
@@ -67,7 +67,7 @@
 | 模型对比（界面） | 桌面“模型对比”（`ComparePackageCombo` 选择历史包 / `ComparePackageBox` 手输 + `CompareButton`）；自动化 `ui_flow.ps1 -ComparePackage <目录>` | 实测“模型对比完成：A 76.7% / B 90.0%，一致率 76.7%（30 张）”；标签不一致时消息区显示警告；CSV 导出与 7 项 pytest 覆盖 |
 | 长路径解压与自检（本机） | 解压 `dist/laitp-offline-lean.zip` 到 140 字符目录后运行包内自检 | 本机 `LongPathsEnabled=1`：解压成功、`verify_offline_bundle --extracted` 退出 0（ZIP 内最长相对路径 159 字符，完整路径约 300 字符）；耗时约 130 s（杀毒扫描影响）；未在未启用长路径的目标机验证，不作为目标机结论 |
 | 包内清单环境声明一致性 | 包内自检（`verify_offline_bundle.py --extracted .`） | 核对 manifest.environment 的 platform/python_embedded/desktop_self_contained 声明与包内实际（便携 Python、自包含 runtimeconfig）一致；新增 3 项 pytest 覆盖 |
-| 界面流程总超时看门狗 | 包内验收第 6 步调用 `ui_flow.ps1`（脚本内部总超时 540 s < 外层 600 s） | 所有状态/按钮等待循环同时受全局 deadline 约束；超过 540 s 抛出“ui_flow 总超时”并写出 JSON，使失败可控且可重试，而不是被外层强杀；1 项脚本卫生测试覆盖 |
+| 界面流程总超时看门狗 | 包内验收第 6 步调用 `ui_flow.ps1`（脚本内部总超时 540 s < 外层 600 s） | 所有状态/按钮等待循环同时受全局 deadline 约束（ui_flow 540 s、ui_create_import 360 s、ui_restore 420 s，均低于外层步骤超时）；超过总时限抛出“总超时”并写出 JSON，使失败可控且可重试，而不是被外层强杀；1 项脚本卫生测试覆盖 |
 | 包内一键验收 | 解压离线包后 `powershell -ExecutionPolicy Bypass -File scripts\run_acceptance.ps1 [-IncludeFlow] [-IncludeExtended]` | 扩展前 9 步已在正式包实测 9/9 通过（2026-11-19；批量预测 4 张/50.0%、模型对比 A 50.0% / B 0.0%、历史汇总 1 次运行）；新增第 10 步“严格验收（正向）”与第 11 步“自检幂等性复核”后已扩展为 11 步，覆盖严格验收正向链路（包内 Python 对流程项目执行 `backend.project check-dataset --require-test --min-train/val/test`；阈值仅用于链路验证，不作为课堂验收门槛）；正式包已实测 11/11 通过（2026-11-19；含“自检幂等性复核”），验收报告含“包身份”（manifest format/created_at/文件数/总字节/manifest SHA-256），详见[项目状态报告](status-report.md)。 |
 | 新建 + 导入 | `powershell -File scripts\ui_create_import.ps1` | `artifacts/ui-create-import.json` |
 | 批量导入 / 测试集导入 | `... -TreeSource <dir>` / `... -TestSource <dir>` | 同上 |
@@ -87,7 +87,7 @@
 
 | 领域 | 命令 | 产物/依据 |
 | --- | --- | --- |
-| 契约 Schema 与拒绝场景 | `.\.venv\Scripts\python.exe -m pytest -q` | 478 项测试 |
+| 契约 Schema 与拒绝场景 | `.\.venv\Scripts\python.exe -m pytest -q` | 479 项测试 |
 | M0 基准（训练/导出/延迟/内存） | `.\.venv\Scripts\python.exe -m benchmarks.m0_benchmark --output artifacts\benchmark-m0` | `artifacts/benchmark-m0/m0-benchmark.json` |
 | 离线环境基准 | `.\.venv-offline\Scripts\python.exe -m benchmarks.m0_benchmark --output artifacts\benchmark-m0-offline` | `artifacts/benchmark-m0-offline/m0-benchmark.json` |
 | 真实公开数据（Fashion-MNIST 3 类） | `.\.venv\Scripts\python.exe scripts\real_data_validation.py` | `artifacts/real-data/result.json`（准确率约 0.917，产物 `art-run-real-0001`） |
@@ -110,7 +110,7 @@
 | 项目 | 值 |
 | --- | --- |
 | 精简包 | `dist/laitp-offline-lean.zip`，SHA-256 见同名 `.sha256` 文件 |
-| Python 测试 | 478 passed |
+| Python 测试 | 479 passed |
 | Core 检查 | 64 项通过 |
 | 一键验证 | 16 步通过（摄像头步骤按要求跳过） |
 | 真实数据准确率 | 约 0.917（Fashion-MNIST 3 类，构造划分） |

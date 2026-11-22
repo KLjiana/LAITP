@@ -53,6 +53,14 @@ def test_run_acceptance_has_all_steps() -> None:
     assert set(ACCEPTANCE_STEPS) <= set(names)
 
 
+def test_other_ui_scripts_have_total_timeout_watchdog() -> None:
+    for name, timeout in (("ui_create_import.ps1", "360"), ("ui_restore.ps1", "420")):
+        text = (SCRIPTS / name).read_text(encoding="utf-8-sig")
+        assert "FlowDeadline" in text, f"{name} 缺少全局 deadline"
+        assert f"FlowTimeoutSeconds = {timeout}" in text, f"{name} 总超时配置缺失"
+        assert "总超时" in text, f"{name} 缺少总超时错误信息"
+
+
 def test_ui_flow_has_total_timeout_watchdog() -> None:
     text = (SCRIPTS / "ui_flow.ps1").read_text(encoding="utf-8-sig")
     for phrase in ("FlowDeadline", "FlowTimeoutSeconds", "总超时"):

@@ -1,4 +1,4 @@
-"""交付状态快速自检：包 SHA、交接目录、最近验证报告、验收汇总与文档一致性。
+"""交付状态快速自检：包 SHA/结构、交接目录、最近验证报告、验收汇总与文档一致性。
 
 只读取现有产物，不重新运行耗时验证（约 1 秒）。
 
@@ -14,11 +14,20 @@ import json
 import re
 import subprocess
 import sys
+import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 BUNDLE = ROOT / "dist/laitp-offline-lean.zip"
+FULL_BUNDLE = ROOT / "dist/laitp-offline-full.zip"
 HANDOFF = ROOT / "dist/handoff"
+BUNDLE_FORMAT = "laitp-offline-bundle-1.0"
+# 打包器写在包根、但不列入 manifest components 的元数据/入口文件。
+BUNDLE_ROOT_METADATA = frozenset(
+    ("manifest.json", "README.txt", "check-bundle.bat", "start-desktop.bat")
+)
+DESKTOP_RUNTIMECONFIG = "desktop/app/Laitp.Desktop.runtimeconfig.json"
+DESKTOP_RUNTIME_FILES = ("desktop/app/coreclr.dll", "desktop/app/hostfxr.dll")
 VERIFY_ALL = ROOT / "artifacts/verify-all/verify-all.json"
 ACCEPTANCE = ROOT / "artifacts/acceptance-local.json"
 ACCEPTANCE_REPORT = ROOT / "artifacts/acceptance-report-final.md"
@@ -230,6 +239,227 @@ def check_handoff_documents(
     }
 
 
+def manifest_component_paths(manifest: dict) -> tuple[list[str], list[str]]:
+    """展开离线包 ``manifest.json`` 的 components 文件路径。
+
+    返回 ``(路径列表, 问题列表)``；components/files 结构异常时只记录问题，
+    不抛异常。路径按 ZIP 内相对路径（正斜杠）原样返回。
+    """
+    components = manifest.get("components")
+    if not isinstance(components, list) or not components:
+        return [], ["manifest.json 缺少 components 组件列表"]
+    paths: list[str] = []
+    problems: list[str] = []
+    for component in components:
+        name = component.get("name") if isinstance(component, dict) else None
+        files = component.get("files") if isinstance(component, dict) else None
+        if not isinstance(files, list):
+            problems.append(
+                f"manifest.json 组件 {name or '（未命名）'} 缺少 files 文件列表"
+            )
+            continue
+        for item in files:
+            path = item.get("path") if isinstance(item, dict) else None
+            if not isinstance(path, str) or not path:
+                problems.append(
+                    f"manifest.json 组件 {name or '（未命名）'} 含无效文件路径"
+                )
+                continue
+            paths.append(path)
+    return paths, problems
+
+
+def check_bundle_structure(
+    bundle_path: Path | None = None,
+    label: str = "离线包",
+) -> dict:
+    """快速校验离线分发包 ZIP 的内部结构（只读 ZIP 目录与少量关键文件）。
+
+    不逐文件校验 SHA-256、不完整解包（约 0.1 秒），用于发现 manifest 与 ZIP
+    条目不符、桌面非自包含、启动/自检脚本被替换等结构问题。检查项：
+
+    - ``manifest.json`` 存在、可 JSON 解析，且 ``format`` 为
+      ``laitp-offline-bundle-1.0``；
+    - manifest components 列出的每个文件都存在于 ZIP，ZIP 也没有未登记
+      的非包根元数据条目（可发现 manifest 文件数与 ZIP 条目数不符）；
+    - ``desktop/app/Laitp.Desktop.runtimeconfig.json`` 的
+      ``runtimeOptions.includedFrameworks`` 非空，且含 ``coreclr.dll``、
+      ``hostfxr.dll``（桌面自包含）；
+    - ``check-bundle.bat`` 含 ``chcp 65001`` 与
+      ``scripts\\verify_offline_bundle.py``；
+    - ``start-desktop.bat`` 指向 ``desktop\\app\\Laitp.Desktop.exe``。
+
+    返回 dict（与 ``check_handoff_*`` 一致）：``checked``、``problems``、
+    ``notes``、``detail``。文件不存在时只返回跳过 note，不判失败；
+    完整解包校验仍由 ``scripts/verify_offline_bundle.py`` 负责。
+    """
+    bundle = BUNDLE if bundle_path is None else Path(bundle_path)
+    problems: list[str] = []
+
+    def fail(message: str) -> None:
+        problems.append(f"{label}结构异常：{message}")
+
+    if not bundle.is_file():
+        return {
+            "checked": False,
+            "problems": [],
+            "notes": [f"未找到 {display_path(bundle)}，跳过 ZIP 结构检查（不判失败）"],
+            "detail": "",
+        }
+
+    try:
+        archive = zipfile.ZipFile(bundle)
+    except (OSError, zipfile.BadZipFile) as error:
+        fail(f"无法作为 ZIP 打开：{error}")
+        return {
+            "checked": True,
+            "problems": problems,
+            "notes": [],
+            "detail": "；".join(problems),
+        }
+
+    manifest_paths: list[str] = []
+    file_entries: set[str] = set()
+    with archive:
+        try:
+            names = archive.namelist()
+        except (OSError, zipfile.BadZipFile) as error:
+            fail(f"无法读取 ZIP 目录：{error}")
+            return {
+                "checked": True,
+                "problems": problems,
+                "notes": [],
+                "detail": "；".join(problems),
+            }
+        # 只比较文件条目；容忍打包器可能写入的目录条目。
+        file_entries = {name for name in names if not name.endswith("/")}
+
+        manifest_loaded = False
+        manifest: object = None
+        if "manifest.json" not in file_entries:
+            fail("缺少 manifest.json")
+        else:
+            try:
+                manifest = json.loads(
+                    archive.read("manifest.json").decode("utf-8")
+                )
+            except (OSError, UnicodeDecodeError, ValueError, zipfile.BadZipFile) as error:
+                fail(f"manifest.json 无法解析：{error}")
+            else:
+                manifest_loaded = True
+
+        if manifest_loaded and not isinstance(manifest, dict):
+            fail("manifest.json 顶层不是 JSON 对象")
+        elif isinstance(manifest, dict):
+            format_version = manifest.get("format")
+            if format_version != BUNDLE_FORMAT:
+                fail(
+                    f"manifest.json format 为 {format_version!r}，"
+                    f"应为 {BUNDLE_FORMAT}"
+                )
+            manifest_paths, path_problems = manifest_component_paths(manifest)
+            for problem in path_problems:
+                fail(problem)
+            missing = [path for path in manifest_paths if path not in file_entries]
+            if missing:
+                fail(
+                    f"manifest 列出的 {len(missing)} 个文件不在 ZIP 中："
+                    + "、".join(missing[:5])
+                    + (" 等" if len(missing) > 5 else "")
+                )
+            unregistered = sorted(
+                file_entries - set(manifest_paths) - BUNDLE_ROOT_METADATA
+            )
+            if unregistered:
+                fail(
+                    f"ZIP 含 {len(unregistered)} 个未在 manifest 登记的条目："
+                    + "、".join(unregistered[:5])
+                    + (" 等" if len(unregistered) > 5 else "")
+                )
+            if len(manifest_paths) != len(set(manifest_paths)):
+                fail("manifest 文件列表含重复路径")
+
+        if DESKTOP_RUNTIMECONFIG not in file_entries:
+            fail(f"缺少 {DESKTOP_RUNTIMECONFIG}")
+        else:
+            try:
+                runtimeconfig = json.loads(
+                    archive.read(DESKTOP_RUNTIMECONFIG).decode("utf-8")
+                )
+            except (OSError, UnicodeDecodeError, ValueError, zipfile.BadZipFile) as error:
+                fail(f"无法解析 {DESKTOP_RUNTIMECONFIG}：{error}")
+            else:
+                runtime_options = (
+                    runtimeconfig.get("runtimeOptions")
+                    if isinstance(runtimeconfig, dict)
+                    else None
+                )
+                included = (
+                    runtime_options.get("includedFrameworks")
+                    if isinstance(runtime_options, dict)
+                    else None
+                )
+                if not included:
+                    fail(
+                        "桌面程序不是自包含发布"
+                        "（runtimeconfig 缺少 includedFrameworks）"
+                    )
+
+        for runtime_file in DESKTOP_RUNTIME_FILES:
+            if runtime_file not in file_entries:
+                fail(f"缺少 {runtime_file}")
+
+        if "check-bundle.bat" not in file_entries:
+            fail("缺少 check-bundle.bat")
+        else:
+            normalized = (
+                archive.read("check-bundle.bat")
+                .decode("utf-8", "replace")
+                .lower()
+                .replace("/", "\\")
+            )
+            if "chcp 65001" not in normalized:
+                fail("check-bundle.bat 未切换 UTF-8 代码页：缺少 chcp 65001")
+            if "scripts\\verify_offline_bundle.py" not in normalized:
+                fail(
+                    "check-bundle.bat 未调用包内自检脚本："
+                    "缺少 scripts\\verify_offline_bundle.py"
+                )
+
+        if "start-desktop.bat" not in file_entries:
+            fail("缺少 start-desktop.bat")
+        else:
+            normalized = (
+                archive.read("start-desktop.bat")
+                .decode("utf-8", "replace")
+                .lower()
+                .replace("/", "\\")
+            )
+            if "desktop\\app\\laitp.desktop.exe" not in normalized:
+                fail(
+                    "start-desktop.bat 未指向包内 "
+                    "desktop\\app\\Laitp.Desktop.exe"
+                )
+
+    if problems:
+        return {
+            "checked": True,
+            "problems": problems,
+            "notes": [],
+            "detail": "；".join(problems),
+        }
+    return {
+        "checked": True,
+        "problems": [],
+        "notes": [],
+        "detail": (
+            "ZIP 结构/自包含/启动脚本通过"
+            f"（manifest {len(manifest_paths)} 个文件均存在于 ZIP，"
+            f"共 {len(file_entries)} 个条目）"
+        ),
+    }
+
+
 def main() -> int:
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -252,15 +482,46 @@ def main() -> int:
         notes.append(f"离线包 {size:,} 字节，SHA-256 {bundle_sha}")
         offline = ROOT / "docs/offline-bundle.md"
         text = offline.read_text(encoding="utf-8") if offline.is_file() else ""
+        document_problems: list[str] = []
+        if not (bundle_sha and bundle_sha in text):
+            document_problems.append("offline-bundle.md 未包含当前离线包完整 SHA-256")
+        if f"{size:,}" not in text:
+            document_problems.append("offline-bundle.md 未包含当前离线包体积（千分位）")
+        # 精简包 SHA 与体积同属交付文档一致性，合并为 1 项；
+        # 原有“离线包”检查仍为 SHA/体积 + ZIP 结构 2 项，check_state 总项数保持 11。
         record(
-            "包 SHA 写入文档",
-            bool(bundle_sha and bundle_sha in text),
-            "offline-bundle.md 含当前完整 SHA-256",
+            "离线包 SHA/体积写入文档",
+            not document_problems,
+            "；".join(document_problems)
+            if document_problems
+            else "offline-bundle.md 含当前完整 SHA-256 与体积（千分位）",
         )
+
+        structure_problems: list[str] = []
+        structure_details: list[str] = []
+        lean_structure = check_bundle_structure(BUNDLE)
+        notes.extend(lean_structure["notes"])
+        structure_problems.extend(lean_structure["problems"])
+        if lean_structure["checked"]:
+            structure_details.append(f"精简包：{lean_structure['detail']}")
+        if FULL_BUNDLE.is_file():
+            full_structure = check_bundle_structure(
+                FULL_BUNDLE, label="完整离线包"
+            )
+            notes.extend(full_structure["notes"])
+            structure_problems.extend(full_structure["problems"])
+            if full_structure["checked"]:
+                structure_details.append(f"完整包：{full_structure['detail']}")
         record(
-            "包体积写入文档",
-            f"{size:,}" in text,
-            "offline-bundle.md 含当前体积（千分位）",
+            "离线包结构轻量校验",
+            not structure_problems,
+            "；".join(structure_problems)
+            if structure_problems
+            else "；".join(structure_details),
+        )
+        notes.append(
+            "离线包结构为轻量 ZIP 检查（manifest 引用/桌面自包含/启动脚本），"
+            "不替代 verify_offline_bundle.py 的完整解包校验"
         )
     else:
         record("离线包存在", False, "未找到 dist/laitp-offline-lean.zip")

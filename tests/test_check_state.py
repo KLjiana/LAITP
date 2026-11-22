@@ -1,4 +1,4 @@
-"""check_state.py 交接目录一致性检查的单元测试。
+"""check_state.py 交接目录一致性与离线包结构检查的单元测试。
 
 覆盖 ``check_handoff_sample``（第 10 项）与 ``check_handoff_documents``（第 11 项）
 的可独立测试逻辑：
@@ -8,6 +8,13 @@
 - manifest 记录的 SHA-256 与实际文件不一致时返回 problem；
 - 任一文件或交接目录缺失时返回跳过 note（不判失败）。
 
+覆盖 ``check_bundle_structure``（离线包 SHA/体积检查中的 ZIP 结构轻量子项）：
+- 正常小 ZIP（含 manifest、自包含 runtimeconfig、coreclr/hostfxr、两个 .bat）通过；
+- 缺 coreclr/hostfxr、缺 runtimeconfig 或 runtimeconfig 不为自包含时返回 problem；
+- manifest 列出的路径不在 ZIP 中、ZIP 含未登记条目、format 不符时返回 problem；
+- 启动/自检脚本内容不符合要求时返回 problem；
+- ZIP 缺失或损坏时分别返回跳过 note / problem。
+
 通过 importlib 按文件路径加载脚本模块，不执行 ``main()``，也不依赖仓库真实产物。
 """
 
@@ -15,6 +22,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -299,3 +307,250 @@ def test_missing_handoff_paths_skip_without_problem(
         )
     assert result["problems"] == []
     assert all("不判失败" in note for note in result["notes"])
+
+
+# --- 离线包 ZIP 结构轻量校验（check_bundle_structure） -------------------------
+
+BUNDLE_FORMAT = "laitp-offline-bundle-1.0"
+RUNTIMECONFIG_PATH = "desktop/app/Laitp.Desktop.runtimeconfig.json"
+CORE_PATHS = (
+    RUNTIMECONFIG_PATH,
+    "desktop/app/coreclr.dll",
+    "desktop/app/hostfxr.dll",
+)
+SELF_CONTAINED_RUNTIMECONFIG = {
+    "runtimeOptions": {
+        "includedFrameworks": [
+            {"name": "Microsoft.NETCore.App", "version": "8.0.0"},
+        ]
+    }
+}
+CHECK_BUNDLE_BAT = (
+    "@echo off\r\n"
+    "chcp 65001 >nul\r\n"
+    "cd /d \"%~dp0\"\r\n"
+    "python\\python.exe scripts\\verify_offline_bundle.py --extracted .\r\n"
+)
+START_DESKTOP_BAT = (
+    "@echo off\r\n"
+    "start \"\" \"%~dp0desktop\\app\\Laitp.Desktop.exe\"\r\n"
+)
+
+
+def bundle_files() -> dict[str, bytes]:
+    """构造可通过结构校验的包内文件（内容只需存在且可解析，无需真实 SHA）。"""
+    return {
+        "README.txt": b"LAITP offline bundle\r\n",
+        "check-bundle.bat": CHECK_BUNDLE_BAT.encode("utf-8"),
+        "start-desktop.bat": START_DESKTOP_BAT.encode("utf-8"),
+        RUNTIMECONFIG_PATH: json.dumps(
+            SELF_CONTAINED_RUNTIMECONFIG, ensure_ascii=False
+        ).encode("utf-8"),
+        "desktop/app/coreclr.dll": b"coreclr-runtime",
+        "desktop/app/hostfxr.dll": b"hostfxr-runtime",
+    }
+
+
+def bundle_manifest(
+    paths: tuple[str, ...] = CORE_PATHS,
+    format_version: str = BUNDLE_FORMAT,
+) -> dict:
+    """构造 manifest.json：components 文件列表 + 包身份信息。"""
+    return {
+        "format": format_version,
+        "created_at": "2026-11-20T00:00:00+00:00",
+        "root": "laitp",
+        "total_bytes": 1,
+        "components": [
+            {
+                "name": "desktop",
+                "source": "desktop",
+                "files": [
+                    {"path": path, "size": 1, "sha256": "0" * 64}
+                    for path in paths
+                ],
+            }
+        ],
+    }
+
+
+def write_bundle(
+    tmp_path: Path,
+    files: dict[str, bytes] | None = None,
+    manifest: dict | None = None,
+) -> Path:
+    """把文件与 manifest 写成小 ZIP，默认即一个结构合法的精简包。"""
+    entries = bundle_files() if files is None else dict(files)
+    manifest_data = bundle_manifest() if manifest is None else manifest
+    entries["manifest.json"] = json.dumps(
+        manifest_data, ensure_ascii=False
+    ).encode("utf-8")
+    bundle = tmp_path / "laitp-offline-lean.zip"
+    with zipfile.ZipFile(bundle, "w") as archive:
+        for name, data in entries.items():
+            archive.writestr(name, data)
+    return bundle
+
+
+def test_valid_bundle_structure_passes(tmp_path: Path) -> None:
+    module = load_check_state()
+    bundle = write_bundle(tmp_path)
+
+    result = module.check_bundle_structure(bundle)
+
+    assert result["checked"] is True
+    assert result["problems"] == []
+    assert result["notes"] == []
+    assert "ZIP 结构/自包含/启动脚本通过" in result["detail"]
+    assert "manifest 3 个文件" in result["detail"]
+
+
+def test_missing_coreclr_is_reported(tmp_path: Path) -> None:
+    module = load_check_state()
+    files = bundle_files()
+    files.pop("desktop/app/coreclr.dll")
+    bundle = write_bundle(
+        tmp_path,
+        files=files,
+        manifest=bundle_manifest((RUNTIMECONFIG_PATH, "desktop/app/hostfxr.dll")),
+    )
+
+    result = module.check_bundle_structure(bundle)
+
+    assert result["problems"] == ["离线包结构异常：缺少 desktop/app/coreclr.dll"]
+
+
+def test_missing_runtimeconfig_is_reported(tmp_path: Path) -> None:
+    module = load_check_state()
+    files = bundle_files()
+    files.pop(RUNTIMECONFIG_PATH)
+    bundle = write_bundle(
+        tmp_path,
+        files=files,
+        manifest=bundle_manifest(("desktop/app/coreclr.dll", "desktop/app/hostfxr.dll")),
+    )
+
+    result = module.check_bundle_structure(bundle)
+
+    assert result["problems"] == [
+        f"离线包结构异常：缺少 {RUNTIMECONFIG_PATH}"
+    ]
+
+
+def test_framework_dependent_runtimeconfig_is_reported(tmp_path: Path) -> None:
+    module = load_check_state()
+    files = bundle_files()
+    files[RUNTIMECONFIG_PATH] = json.dumps(
+        {"runtimeOptions": {"framework": {"name": "Microsoft.WindowsDesktop.App"}}}
+    ).encode("utf-8")
+    bundle = write_bundle(tmp_path, files=files)
+
+    result = module.check_bundle_structure(bundle)
+
+    joined = "；".join(result["problems"])
+    assert "桌面程序不是自包含发布" in joined
+    assert "includedFrameworks" in joined
+
+
+def test_manifest_path_missing_from_zip_is_reported(tmp_path: Path) -> None:
+    module = load_check_state()
+    bundle = write_bundle(
+        tmp_path,
+        manifest=bundle_manifest(CORE_PATHS + ("desktop/app/missing-file.txt",)),
+    )
+
+    result = module.check_bundle_structure(bundle)
+
+    joined = "；".join(result["problems"])
+    assert "manifest 列出的 1 个文件不在 ZIP 中" in joined
+    assert "desktop/app/missing-file.txt" in joined
+
+
+def test_unregistered_zip_entry_is_reported(tmp_path: Path) -> None:
+    module = load_check_state()
+    files = bundle_files()
+    files["desktop/app/unlisted.txt"] = b"extra"
+    bundle = write_bundle(tmp_path, files=files)
+
+    result = module.check_bundle_structure(bundle)
+
+    joined = "；".join(result["problems"])
+    assert "未在 manifest 登记的条目" in joined
+    assert "desktop/app/unlisted.txt" in joined
+
+
+def test_manifest_format_mismatch_is_reported(tmp_path: Path) -> None:
+    module = load_check_state()
+    bundle = write_bundle(
+        tmp_path, manifest=bundle_manifest(format_version="laitp-offline-bundle-0.9")
+    )
+
+    result = module.check_bundle_structure(bundle)
+
+    assert any(
+        "format" in problem and BUNDLE_FORMAT in problem
+        for problem in result["problems"]
+    )
+
+
+@pytest.mark.parametrize(
+    ("bat_content", "expected"),
+    [
+        (
+            "@echo off\r\npython\\python.exe scripts\\verify_offline_bundle.py\r\n",
+            "缺少 chcp 65001",
+        ),
+        (
+            "@echo off\r\nchcp 65001 >nul\r\npython\\python.exe run.py\r\n",
+            "缺少 scripts\\verify_offline_bundle.py",
+        ),
+    ],
+)
+def test_check_bundle_script_content_is_validated(
+    tmp_path: Path, bat_content: str, expected: str
+) -> None:
+    module = load_check_state()
+    files = bundle_files()
+    files["check-bundle.bat"] = bat_content.encode("utf-8")
+
+    result = module.check_bundle_structure(write_bundle(tmp_path, files=files))
+
+    assert len(result["problems"]) == 1
+    assert expected in result["problems"][0]
+
+
+def test_start_desktop_wrong_target_is_reported(tmp_path: Path) -> None:
+    module = load_check_state()
+    files = bundle_files()
+    files["start-desktop.bat"] = (
+        "@echo off\r\n"
+        "start \"\" \"%~dp0desktop\\src\\bin\\Debug\\Laitp.Desktop.exe\"\r\n"
+    ).encode("utf-8")
+
+    result = module.check_bundle_structure(write_bundle(tmp_path, files=files))
+
+    assert len(result["problems"]) == 1
+    assert "start-desktop.bat 未指向包内" in result["problems"][0]
+    assert "Laitp.Desktop.exe" in result["problems"][0]
+
+
+def test_missing_bundle_skips_without_problem(tmp_path: Path) -> None:
+    module = load_check_state()
+
+    result = module.check_bundle_structure(tmp_path / "missing.zip")
+
+    assert result["checked"] is False
+    assert result["problems"] == []
+    assert len(result["notes"]) == 1
+    assert "跳过 ZIP 结构检查（不判失败）" in result["notes"][0]
+
+
+def test_broken_zip_is_reported(tmp_path: Path) -> None:
+    module = load_check_state()
+    bundle = tmp_path / "broken.zip"
+    bundle.write_bytes(b"not a zip file")
+
+    result = module.check_bundle_structure(bundle)
+
+    assert result["checked"] is True
+    assert any("无法作为 ZIP 打开" in problem for problem in result["problems"])

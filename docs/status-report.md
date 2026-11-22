@@ -26,7 +26,7 @@ A1–A15 的逐项状态、证据与剩余动作（本机待做/目标机待做/
 
 | 验证 | 命令 | 结果 |
 | --- | --- | --- |
-| Python 单元测试 | `.venv\Scripts\python.exe -m pytest -q` | **452 passed** |
+| Python 单元测试 | `.venv\Scripts\python.exe -m pytest -q` | **464 passed** |
 | 桌面构建 | `.dotnet\dotnet.exe build desktop\Laitp.sln` | 0 警告 0 错误 |
 | Core 检查 | `.dotnet\dotnet.exe run --project desktop\tests\Laitp.Core.Checks` | **64 项通过** |
 | 一键验证 | `.venv\Scripts\python.exe scripts\verify_all.py --ui` | **16 步通过（摄像头步骤按要求跳过）**（约 10 分钟，`artifacts/verify-all/verify-all.json`） |

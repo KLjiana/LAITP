@@ -23,6 +23,7 @@ COPY_DOCS = (
     "acceptance-card.md",
     "acceptance-checklist.md",
     "verification-evidence.md",
+    "known-limitations.md",
 )
 
 

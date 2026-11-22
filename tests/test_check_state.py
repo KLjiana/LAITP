@@ -35,6 +35,7 @@ HANDOFF_DOC_NAMES = (
     "acceptance-card.md",
     "acceptance-checklist.md",
     "verification-evidence.md",
+    "known-limitations.md",
 )
 HANDOFF_DOC_TEXT = {
     "README.md": "# 临时 README\n\n交接文档一致性测试用项目说明。\n",
@@ -42,6 +43,7 @@ HANDOFF_DOC_TEXT = {
     "acceptance-card.md": "# 验收操作卡\n\n临时文档。\n",
     "acceptance-checklist.md": "# 验收清单\n\n临时文档。\n",
     "verification-evidence.md": "# 验证证据\n\n临时文档。\n",
+    "known-limitations.md": "# 已知限制\n\n临时文档。\n",
 }
 
 REPORT_TEXT = (

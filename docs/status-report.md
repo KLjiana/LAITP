@@ -96,6 +96,8 @@ A1–A15 的逐项状态、证据与剩余动作（本机待做/目标机待做/
 
 目标机验收步骤见[目标机离线验收清单](acceptance-checklist.md)。
 
+> 证据边界与已知限制集中见[已知限制与验收边界](known-limitations.md)。
+
 ## 5. 主要文件
 
 - 路线图：[roadmap.md](roadmap.md)；契约：[model-contract.md](model-contract.md)

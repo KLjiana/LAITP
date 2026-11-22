@@ -34,6 +34,7 @@ ACCEPTANCE_REPORT = ROOT / "artifacts/acceptance-report-final.md"
 HANDOFF_SAMPLE_NAME = "acceptance-report-sample.md"
 # 交接目录中文档副本与仓库中的源文件（名称、仓库相对路径），与 make_handoff.py 保持一致。
 HANDOFF_DOCUMENTS = (
+    ("known-limitations.md", "docs/known-limitations.md"),
     ("README.md", "README.md"),
     ("teacher-quickstart.md", "docs/teacher-quickstart.md"),
     ("acceptance-card.md", "docs/acceptance-card.md"),

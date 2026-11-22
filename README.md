@@ -118,6 +118,7 @@ py -3.12 -m venv .venv
 | [模型接口与产物契约](docs/model-contract.md) | 模型清单 / 标签 / 张量 / 运行时规则与版本兼容，契约 1.0 为强制约束 |
 | [项目状态报告](docs/status-report.md) | 已实现能力、本机验证证据、外部阻塞与未验收项 |
 | [验证证据索引](docs/verification-evidence.md) | 可复现命令、产物路径、截图与按改动范围选择验证方式 |
+| [已知限制与验收边界](docs/known-limitations.md) | 集中说明证据边界、摄像头、离线/长路径、性能、检测草案与数据限制 |
 | [目标机验收操作卡](docs/acceptance-card.md) | 一页版现场步骤：准备、自检、11 环节一键验收、记录表与常见失败速查 |
 | [目标机离线验收清单](docs/acceptance-checklist.md) | A1–A15 验收项、记录模板与判定规则 |
 | [离线分发包](docs/offline-bundle.md) | 构建 / 校验命令、包内容、SHA-256 与体积、限制（易过期数值以本文为准） |

@@ -212,3 +212,46 @@ def test_check_docs_skips_external_and_missing_anchor_targets(tmp_path: Path) ->
         encoding="utf-8",
     )
     assert module.find_broken_anchors(sorted(docs.glob("*.md"))) == []
+
+def test_check_docs_accepts_matching_third_party_notices(tmp_path: Path) -> None:
+    module = load_check_docs("check_docs_notices_ok")
+    requirements = tmp_path / "requirements.txt"
+    requirements.write_text(
+        "torch==2.8.0+cpu\njsonschema==4.25.1\n", encoding="utf-8"
+    )
+    notices = tmp_path / "third-party-notices.md"
+    notices.write_text(
+        "| 组件 | 版本 | 许可证 |\n"
+        "| --- | --- | --- |\n"
+        "| torch | 2.8.0+cpu | BSD-3-Clause |\n"
+        "| jsonschema | 4.25.1 | MIT |\n",
+        encoding="utf-8",
+    )
+
+    assert module.find_dependency_notice_issues([requirements], notices) == []
+
+
+def test_check_docs_reports_missing_third_party_notice(tmp_path: Path) -> None:
+    module = load_check_docs("check_docs_notices_missing")
+    requirements = tmp_path / "requirements.txt"
+    requirements.write_text("onnxruntime==1.23.2\n", encoding="utf-8")
+    notices = tmp_path / "third-party-notices.md"
+    notices.write_text("| torch | 2.8.0+cpu | BSD-3-Clause |\n", encoding="utf-8")
+
+    issues = module.find_dependency_notice_issues([requirements], notices)
+
+    assert len(issues) == 1
+    assert "onnxruntime" in issues[0]
+
+
+def test_check_docs_reports_third_party_version_mismatch(tmp_path: Path) -> None:
+    module = load_check_docs("check_docs_notices_version")
+    requirements = tmp_path / "requirements.txt"
+    requirements.write_text("torch==2.9.0\n", encoding="utf-8")
+    notices = tmp_path / "third-party-notices.md"
+    notices.write_text("| torch | 2.8.0+cpu | BSD-3-Clause |\n", encoding="utf-8")
+
+    issues = module.find_dependency_notice_issues([requirements], notices)
+
+    assert len(issues) == 1
+    assert "不一致" in issues[0]

@@ -165,6 +165,54 @@ def unique_counts(texts: dict[str, str], pattern: str) -> dict[str, set[str]]:
     return found
 
 
+def parse_requirements_pins(path: Path) -> list[tuple[str, str]]:
+    """解析 requirements 文件中的 name==version 固定项（跳过 -r/--index/注释）。"""
+    if not path.is_file():
+        return []
+    pins: list[tuple[str, str]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith(("-", "#")):
+            continue
+        match = re.match(r"^([A-Za-z0-9_.\-]+)==([^\s;#]+)", stripped)
+        if match:
+            pins.append((match.group(1).lower(), match.group(2)))
+    return pins
+
+
+def parse_notice_versions(path: Path) -> dict[str, set[str]]:
+    """解析第三方许可说明表格中的 | 组件 | 版本 | 行。"""
+    if not path.is_file():
+        return {}
+    versions: dict[str, set[str]] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        match = re.match(r"^\|\s*([A-Za-z0-9_.\-]+)\s*\|\s*([^\s|]+)", line)
+        if match:
+            versions.setdefault(match.group(1).lower(), set()).add(match.group(2))
+    return versions
+
+
+def find_dependency_notice_issues(
+    requirements: list[Path], notices: Path
+) -> list[str]:
+    """核对 requirements 固定版本与第三方许可说明表格一致。"""
+    notice_versions = parse_notice_versions(notices)
+    issues: list[str] = []
+    for requirement in requirements:
+        for name, version in parse_requirements_pins(requirement):
+            known = notice_versions.get(name)
+            if not known:
+                issues.append(
+                    f"{notices.name} 未列出依赖 {name}=={version}（来自 {requirement.name}）"
+                )
+            elif version not in known:
+                issues.append(
+                    f"{notices.name} 中 {name} 版本为 {sorted(known)}，"
+                    f"与 {requirement.name} 的 {version} 不一致"
+                )
+    return issues
+
+
 def main() -> int:
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -179,6 +227,11 @@ def main() -> int:
         problems.append(f"文档链接失效：{broken}")
     for broken in find_broken_anchors(doc_paths):
         problems.append(f"文档锚点失效：{broken}")
+    for issue in find_dependency_notice_issues(
+        [ROOT / "requirements.txt", ROOT / "requirements-dev.txt"],
+        DOCS / "third-party-notices.md",
+    ):
+        problems.append(issue)
     readme = ROOT / "README.md"
     if readme.is_file():
         for broken in find_broken_links_in([readme]):

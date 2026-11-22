@@ -234,7 +234,7 @@ python\python.exe scripts\dataset_report.py --project <项目目录>
 - **可能原因**：`run_acceptance.ps1` 把逐步骤结果写入 JSON/报告，Python 子步骤的 stderr 另存到 `artifacts\`；只看控制台末尾容易漏掉具体步骤与错误路径。
 - **处理方式**（按顺序）：
   1. `acceptance-run.json`：`ok`、`error`、`steps[].status` 与 `detail`（失败步骤及对应输出路径）。
-  2. `acceptance-report.md`：系统、用户/管理员、CPU/内存、包身份与步骤状态表，可直接作为[第 5 节](#5-目标机记录模板)记录草稿。
+  2. `acceptance-report.md`：系统、用户/管理员、CPU/内存/磁盘、长路径支持与包目录长度、包身份与步骤状态表，可直接作为[第 5 节](#5-目标机记录模板)记录草稿。
   3. `artifacts\*.stderr.txt`：包内 Python 的 stderr，如 `verify-bundle-idempotent.stderr.txt`、`strict-acceptance.stderr.txt`、`strict-acceptance-probe.stderr.txt`、`dataset-report-acceptance.stderr.txt`、`batch-history-acceptance.stderr.txt`（可能为空，失败明细以重跑脚本的 stdout 为准）。
   4. 对应步骤的 JSON：`artifacts\ui-smoke-acceptance.json`、`ui-create-import-acceptance.json`、`ui-flow-acceptance.json`、`ui-restore-acceptance.json`、`startup-acceptance.json`，界面脚本的 `error` 字段通常直接给出原因。
   5. 汇总命令：

@@ -44,7 +44,7 @@ Get-Content .\acceptance-run.json -Raw
 Get-Content .\acceptance-report.md -Raw
 ```
 
-- `acceptance-run.json` 的 `ok` 与 `steps` 是机器判据；`acceptance-report.md` 含系统、用户/是否管理员、CPU/内存、包身份与步骤表，可直接归档。
+- `acceptance-run.json` 的 `ok` 与 `steps` 是机器判据；`acceptance-report.md` 含系统、用户/是否管理员、CPU/内存/磁盘余量、长路径支持状态与包目录长度、包身份与步骤表，可直接归档。
 - 失败时保留 `acceptance-run.json`、`acceptance-report.md`、`artifacts\*.stderr.txt`，并记录现象。
 
 ## 5. 现场记录表（手填）

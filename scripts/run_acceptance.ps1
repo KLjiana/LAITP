@@ -834,6 +834,17 @@ finally {
     catch {
         $freeGb = ""
     }
+    $longPaths = "未知"
+    try {
+        $longPathsValue = (Get-ItemProperty `
+            -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
+            -Name "LongPathsEnabled" -ErrorAction Stop).LongPathsEnabled
+        $longPaths = if ($longPathsValue -eq 1) { "已启用" } else { "未启用" }
+    }
+    catch {
+        $longPaths = "未知"
+    }
+    $rootLength = ([string]$root).Length
 
     $report = New-Object System.Text.StringBuilder
     [void]$report.AppendLine("# LAITP 离线包验收记录")
@@ -844,6 +855,8 @@ finally {
     [void]$report.AppendLine("- CPU：$cpuName")
     [void]$report.AppendLine("- 内存：$memoryGb GB")
     [void]$report.AppendLine("- 磁盘：$freeGb GB（包所在盘剩余）")
+    [void]$report.AppendLine("- 长路径支持：$longPaths（Windows LongPathsEnabled）")
+    [void]$report.AppendLine("- 包目录长度：$rootLength 字符（建议使用较短解压路径）")
     [void]$report.AppendLine("- 包目录：$root")
     [void]$report.AppendLine()
     [void]$report.AppendLine("## 包身份")

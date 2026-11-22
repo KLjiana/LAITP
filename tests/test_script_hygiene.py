@@ -74,5 +74,12 @@ def test_run_acceptance_has_ui_step_retry() -> None:
 
 def test_run_acceptance_reports_bundle_identity_and_disk() -> None:
     text = (SCRIPTS / "run_acceptance.ps1").read_text(encoding="utf-8-sig")
-    for phrase in ("manifest.json", "manifest_sha256", "## 包身份", "- 磁盘："):
+    for phrase in (
+        "manifest.json",
+        "manifest_sha256",
+        "## 包身份",
+        "- 磁盘：",
+        "长路径支持",
+        "包目录长度",
+    ):
         assert phrase in text, f"验收报告缺少 {phrase!r}"

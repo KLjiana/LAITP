@@ -75,6 +75,6 @@ Get-Content .\acceptance-report.md -Raw
 | “管理员：否” | 正常，不代表失败；普通用户是验收要求 |
 | 双击 exe 提示“必须安装 .NET Desktop Runtime” | 不要运行 `desktop/src/.../bin` 下的开发构建 exe；请用分发包根目录的 `start-desktop.bat` 或 `desktop/app/Laitp.Desktop.exe`（包内为自包含发布） |
 | 耗时明显偏长 | 冷启动/杀毒扫描/负载；以 `status` 判断，不以耗时判失败 |
-| 路径过长 | 换更短解压目录（如 `D:\LAITP`） |
+| 路径过长 | 报告含“长路径支持/包目录长度”。未启用长路径（`LongPathsEnabled=0`）且完整路径接近 260 字符时，解压/启动可能失败；请换更短解压目录（如 `D:\LAITP`）。本机在启用长路径时以约 300 字符路径解压+自检通过（仅本机证据） |
 
 更多排查见[验收清单 §7 常见失败与排查](acceptance-checklist.md#常见失败与排查)。

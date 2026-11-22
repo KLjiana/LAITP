@@ -1,5 +1,8 @@
 > 注意：不要直接双击 `desktop/src/.../bin/.../Laitp.Desktop.exe`——那是**开发构建**（框架依赖），未安装 .NET Desktop Runtime 时会提示运行时缺失。演示与交付请用 `dist/` 下的离线包（包内桌面为自包含发布，解压后运行 `start-desktop.bat`），或 `dist/desktop-selfcontained/Laitp.Desktop.exe`。
 
+![tooling](https://github.com/KLjiana/LAITP/actions/workflows/tooling.yml/badge.svg)
+
+
 # LAITP 离线 AI 教学平台
 
 面向中小学的离线 AI 教学平台：学生在 Windows x64 电脑上采集和检查图片、训练小模型、用新样本测试并分析误判，适配的模型再部署到 K230 / K210 开发板。目标形态是**解压双击、免注册、断网可用**——桌面端为 WPF（C# / XAML），AI 后端为内置 Python 子进程；设计前提是离线包自带便携 Python 与自包含 .NET 运行时，目标机无需预装 Python 或 .NET（目标机尚未验收）。

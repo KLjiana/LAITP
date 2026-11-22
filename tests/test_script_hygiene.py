@@ -11,7 +11,11 @@
 from __future__ import annotations
 
 import re
+import shutil
+import subprocess
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
@@ -97,3 +101,33 @@ def test_run_acceptance_reports_bundle_identity_and_disk() -> None:
         "包目录长度",
     ):
         assert phrase in text, f"验收报告缺少 {phrase!r}"
+
+PS_PARSE_SCRIPT = """
+$failed = 0
+foreach ($path in $args) {
+    $errors = $null
+    [void][System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$errors)
+    if ($errors.Count -gt 0) {
+        Write-Output "$path => $($errors.Count) errors"
+        $failed = 1
+    }
+}
+exit $failed
+"""
+
+
+def test_powershell_scripts_parse() -> None:
+    powershell = shutil.which("powershell") or shutil.which("pwsh")
+    if not powershell:
+        pytest.skip("当前环境没有 PowerShell，跳过解析检查")
+    scripts = [str(script) for script in sorted(SCRIPTS.glob("*.ps1"))]
+    assert scripts
+    completed = subprocess.run(
+        [powershell, "-NoProfile", "-Command", PS_PARSE_SCRIPT, *scripts],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=120,
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr

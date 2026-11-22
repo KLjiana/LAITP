@@ -82,7 +82,7 @@
 | 训练报告 | 成功（0.917） |
 | 启动脚本 | 存在 `start-desktop.bat` |
 | 桌面程序启动 | 成功（存活 4 秒，`LAITP_PYTHON` 指向包内解释器） |
-| 包内现场自检 | 通过（`python\python.exe scripts\verify_offline_bundle.py --extracted .` 或双击 `check-bundle.bat`：清单卫生、启动脚本指向、check-bundle.bat 内容、桌面自包含检查通过，18,172 文件摘要 + 推理 + 报告 + 桌面 + 自检） |
+| 包内现场自检 | 通过（`python\python.exe scripts\verify_offline_bundle.py --extracted .` 或双击 `check-bundle.bat`：清单卫生、启动脚本指向、check-bundle.bat 内容、manifest 环境声明一致、第一方文本开发机路径扫描、桌面自包含检查通过，18,172 文件摘要 + 推理 + 报告 + 桌面 + 自检） |
 | 启动耗时（解包目录） | 首次窗口 5.11 s；暖启动窗口 0.83 s、自动自检完成 1.59 s（`scripts/measure_startup.ps1`） |
 | 首次运行自检 | **通过**：`repository_root`、`python`、`backend_import`、`worker_predict` 全部 ok |
 | 自检失败场景 | 错误 `LAITP_PYTHON` 路径时自检返回失败（exit≠0），且 `python` 检查项标记失败 |
@@ -159,13 +159,15 @@ desktop\app\Laitp.Desktop.exe --self-test self-test-result.json
 
 ### 3.5 包内现场自检
 
-包根还包含 `README.md`（项目总览、快速开始与文档索引）与 `README.txt`（包内说明）。`desktop/app` 为自包含发布（`runtimeconfig` 使用 `includedFrameworks`，含 `coreclr.dll`/`hostfxr.dll`），目标机无需预装 .NET Desktop Runtime；自检会显式校验桌面自包含、`start-desktop.bat` 指向与 `check-bundle.bat` 内容。不要运行 `desktop/src/.../bin` 下的开发构建 exe（那是框架依赖版本，会提示缺少 .NET Desktop Runtime）。包内自带 `scripts/verify_offline_bundle.py`，以及界面自动化脚本 `ui_smoke.ps1`、`ui_flow.ps1`、`ui_camera.ps1`、`ui_preview_stability.ps1`、`ui_create_import.ps1`、`ui_restore.ps1`、`ui_export_history.ps1`、`ui_edit.ps1`、`measure_startup.ps1`、`run_acceptance.ps1`（一键验收：基础 3 步，加 `-IncludeFlow -IncludeExtended` 可扩展到 11 步，含演示导入、训练预测、保存恢复、数据体检、批量历史汇总、“严格验收（正向）”与“自检幂等性复核”；其中“训练与预测”将执行界面批量预测，包内存在示例模型包时执行模型对比，“批量历史汇总”将优先基于流程项目的非空历史，“严格验收（正向）”用包内 Python 对流程项目执行 `backend.project check-dataset --require-test --min-train/val/test` 验证严格验收正向链路，阈值仅用于链路验证、不作为课堂验收门槛；新增第 10/11 步后正式包已实测 11/11 通过（2026-11-19），界面脚本关键输入框多轮设置+回读校验；界面步骤失败自动单次重试并留痕（有界超时 180–600 s；首次失败记入 `warnings`，重试通过记为 pass，两次失败判失败），验收报告新增“包身份”（manifest format/created_at/文件数/总字节/manifest SHA-256））、`project_archive.py`（项目归档）、`batch_history_export.py`（批量历史汇总）与 `dataset_report.py`（数据体检）；解压后可直接用包内 Python/桌面运行自检，无需开发环境：
+包根还包含 `README.md`（项目总览、快速开始与文档索引）与 `README.txt`（包内说明）；包内 `docs/` 为仓库全部文档副本（含 `teacher-quickstart.md`、`known-limitations.md`、`third-party-notices.md` 等）。`desktop/app` 为自包含发布（`runtimeconfig` 使用 `includedFrameworks`，含 `coreclr.dll`/`hostfxr.dll`），目标机无需预装 .NET Desktop Runtime；自检会显式校验清单卫生、桌面自包含、`start-desktop.bat` 指向、`check-bundle.bat` 内容、`manifest.json` 环境声明（`platform`/`python_embedded`/`desktop_self_contained`）与包内实际一致，并扫描清单内第一方文本是否含开发机绝对路径。不要运行 `desktop/src/.../bin` 下的开发构建 exe（那是框架依赖版本，会提示缺少 .NET Desktop Runtime）。包内自带 `scripts/verify_offline_bundle.py`，以及界面自动化脚本 `ui_smoke.ps1`、`ui_flow.ps1`、`ui_camera.ps1`、`ui_preview_stability.ps1`、`ui_create_import.ps1`、`ui_restore.ps1`、`ui_export_history.ps1`、`ui_edit.ps1`、`measure_startup.ps1`、`run_acceptance.ps1`（一键验收：基础 3 步，加 `-IncludeFlow -IncludeExtended` 可扩展到 11 步，含演示导入、训练预测、保存恢复、数据体检、批量历史汇总、“严格验收（正向）”与“自检幂等性复核”；其中“训练与预测”将执行界面批量预测，包内存在示例模型包时执行模型对比，“批量历史汇总”将优先基于流程项目的非空历史，“严格验收（正向）”用包内 Python 对流程项目执行 `backend.project check-dataset --require-test --min-train/val/test` 验证严格验收正向链路，阈值仅用于链路验证、不作为课堂验收门槛；新增第 10/11 步后正式包已实测 11/11 通过（2026-11-19），界面脚本关键输入框多轮设置+回读校验；界面步骤失败自动单次重试并留痕（有界超时 180–600 s；首次失败记入 `warnings`，重试通过记为 pass，两次失败判失败），验收报告新增“包身份”（manifest format/created_at/文件数/总字节/manifest SHA-256））、`project_archive.py`（项目归档）、`batch_history_export.py`（批量历史汇总）与 `dataset_report.py`（数据体检）；解压后可直接用包内 Python/桌面运行自检，无需开发环境：
 
 ```powershell
 python\python.exe scripts\verify_offline_bundle.py --extracted .
 ```
 
-也可**双击 `check-bundle.bat`**（自动切换 UTF-8 代码页、运行同一自检并暂停显示结果）。本机实测（全新解压目录）：**通过**——18,172 个清单文件摘要全部匹配、包内 Python 导入成功、解包推理 `art-run-real-0001`、训练报告 0.917、`start-desktop.bat` 存在、桌面启动存活 4 秒、首次自检四项通过、错误 Python 失败场景识别正常；批处理退出码 0。
+也可**双击 `check-bundle.bat`**（自动切换 UTF-8 代码页、运行同一自检并暂停显示结果）。本机实测（全新解压目录）：**通过**——18,172 个清单文件摘要全部匹配、清单卫生/启动脚本/自检脚本/桌面自包含/manifest 环境声明等结构检查通过、第一方文本无开发机绝对路径、包内 Python 导入成功、解包推理 `art-run-real-0001`、训练报告 0.917、`start-desktop.bat` 存在、桌面启动存活 4 秒、首次自检四项通过、错误 Python 失败场景识别正常；批处理退出码 0。
+
+上述结构/环境/路径检查均为只读且幂等：路径扫描范围限 `manifest.json` 列出的第一方文件与包根脚本（跳过 `docs/`、`README.md`、`manifest.json` 与二进制），自检/验收运行时生成的产物不在清单内，不会误报。相关单测：manifest 环境声明一致性 3 项、包内第一方文本路径扫描 4 项。
 
 说明：自检会在解压目录内生成 `__pycache__` 等运行产物；当前构建已排除第一方 `__pycache__`/`*.pyc`，清单 18,172 个文件不含编译缓存，运行期新生成的缓存不计入清单。自检脚本另含清单卫生检查，清单中若出现缓存/编译产物会直接判失败；历史构建曾因 pyc 被重写导致“先 check-bundle 再一键验收”不幂等，修复与复验见 §3.7。
 
@@ -189,10 +191,10 @@ python\python.exe scripts\verify_offline_bundle.py --extracted .
 - **扫描时需修复的唯一条目**是随包分发的训练运行记录 `demo/run/config.json`：其 `dataset_root` 会被 `backend.classification export --run demo/run`（未显式提供 `--data-root` 时）读取，在目标机上指向不存在的开发机目录，导出会以“固定样本文件不存在”失败；包内自检与训练报告只读取 `training-artifact.json`/`metrics.json`/`model.pt`，不读取该字段，因此**不属于 A1 包校验阻断项**。`dataset_manifest` 与 `weights.path` 目前只作来源记录。该问题属**低风险可移植性缺陷**，未在目标机验证。
 - 二进制不在文本扫描范围；抽样发现 41 个 `backend/__pycache__/*.pyc` 与 2 个桌面 DLL 内含开发机源码/PDB 路径（`.pyc` 的 `co_filename`、DLL 的 RSDS 调试记录），只用于调试回溯显示，不构成运行依赖，但建议打包时排除。
 
-修复建议（扫描时只更新文档、未改生产代码、未重新打包；其中第 1、3 项已在 §3.7 的当前构建修复并复验，第 2 项尚未实现）：
+修复建议（扫描时只更新文档、未改生产代码、未重新打包；其中第 1、3 项已在 §3.7 的当前构建修复并复验，第 2 项已于 2026-11-23 实现，见下）：
 
 1. 打包 `demo/run` 时生成可移植副本：把 `config.json` 的 `dataset_manifest`/`dataset_root`/`weights.path` 改写为包内相对路径或与机器无关的来源说明；`training-artifact.json` 的 `files` 记录了 `config.json` 的 SHA-256，改写后必须同步更新该摘要，或按契约重新签发一份演示运行记录，避免原地修改已发布记录。
-2. **已实现（2026-11-23）**：构建脚本在生成 manifest 前扫描第一方文本（`backend/`、`scripts/`、`configs/`、`schemas/`、`demo/`、`desktop/` 与包根脚本/说明；排除 `docs/`、`README.md`、`manifest.json` 与二进制），命中工作区路径、用户目录、`/d/project`、`/mnt/d/project` 等标记即中止构建；3 项 pytest 覆盖。
+2. **已实现（2026-11-23）**：构建脚本在生成 manifest 前扫描第一方文本（`backend/`、`scripts/`、`configs/`、`schemas/`、`demo/`、`desktop/` 与包根脚本/说明；排除 `docs/`、`README.md`、`manifest.json` 与二进制），命中工作区路径、用户目录、`/d/project`、`/mnt/d/project` 等标记即中止构建；3 项 pytest 覆盖。包内自检脚本同样内置该扫描（限 manifest 列出的第一方文件，4 项 pytest 覆盖；见 §3.5）。
 3. 打包时排除 `__pycache__`、`.pdb` 等调试产物，避免把开发机源码路径与调试信息带入分发包。
 
 ### 3.7 自检幂等性复验与修复（2026-11-19）

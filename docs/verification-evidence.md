@@ -20,10 +20,11 @@
 | 完整本机验证（16 步，约 10 分钟） | `.\.venv\Scripts\python.exe scripts\verify_all.py --ui` | `artifacts/verify-all/verify-all.json`、`verify-all.txt` |
 | 含摄像头的历史命令（17 步；需可用摄像头，自动化测试已于 2026-11-18 停止，仅供人工复验） | `.\.venv\Scripts\python.exe scripts\verify_all.py --ui --camera` | 同上 |
 | 验收项证据汇总（A1–A15） | `.\.venv\Scripts\python.exe scripts\acceptance_audit.py` | `artifacts/acceptance-local.json`、`acceptance-local.md` |
-| 文档一致性检查 | `.\.venv\Scripts\python.exe scripts\check_docs.py` | 核对当前包 SHA/体积、测试数、Core 检查数、验证步数、过期缩写 SHA，以及 docs 与根 README 的 Markdown 本地链接与 #锚点；退出码 0 表示一致 |
+| 文档一致性检查 | `.\.venv\Scripts\python.exe scripts\check_docs.py` | 核对当前包 SHA/体积、测试数、Core 检查数、验证步数、过期缩写 SHA、依赖版本与 `third-party-notices.md` 一致，以及 docs 与根 README 的 Markdown 本地链接与 #锚点；退出码 0 表示一致 |
 | CP936 控制台兼容验收（本机） | 在 `chcp 936` 控制台（中文+空格路径）运行 `run_acceptance.ps1 -IncludeFlow -IncludeExtended` | 修复控制台编码后，**正式包在 CP936 与默认环境下均 11/11 通过**（自检 27.8 s、自检幂等性复核 25.2 s；第 8/9/10 步 JSON 正常解析，stderr 全 0 字节）；旧版在 CP936 下这三步会因 GBK 解码 UTF-8 JSON 失败 |
 | 中文+空格路径验收（本机，非提权） | 解压到含中文与空格的临时目录后按“自检 → `run_acceptance.ps1 -IncludeFlow -IncludeExtended` → 再次自检” | **幂等通过**：首次自检 0、验收 11/11（自检 28.0 s、窗口 10.9 s、严格验收 0.5 s）、再次自检 0；打包已排除 `__pycache__`/pyc 并改写演示记录绝对路径；详见[离线分发包 §3.7](offline-bundle.md#37-自检幂等性复验与修复2026-11-19) |
 | 包内桌面自包含检查 | python\python.exe scripts\verify_offline_bundle.py --extracted .（随包内自检执行） | 校验 desktop/app 的 runtimeconfig 使用 includedFrameworks 且含 coreclr.dll/hostfxr.dll；框架依赖构建会被判失败；同时校验 start-desktop.bat 指向包内 desktop\app\Laitp.Desktop.exe（不得指向开发 bin 目录）；并校验 check-bundle.bat 含 chcp 65001、包内 python\python.exe、scripts\verify_offline_bundle.py 与 --extracted，且不含开发机绝对路径；12 项 pytest 覆盖 |
+| 包内第一方文本绝对路径扫描（A13 回归） | 包内自检（`python\python.exe scripts\verify_offline_bundle.py --extracted .`） | 扫描范围限 `manifest.json` 列出的第一方文件与包根脚本（跳过 `docs/`、`README.md`、`manifest.json` 与二进制）；命中工作区路径/用户目录/`/d/project`/`/mnt/d/project` 即失败；运行时生成产物不在清单内，重复自检幂等；4 项 pytest 覆盖 |
 | 构建期绝对路径断言（A13 回归） | 构建离线包时自动执行 | 扫描第一方文本（backend/scripts/configs/schemas/demo/desktop 与包根脚本/说明），命中工作区路径/用户目录/`/d/project`/`/mnt/d/project` 即中止构建；3 项 pytest 覆盖；2026-11-23 构建实测通过（无命中） |
 | 依赖与许可说明一致性 | `scripts/check_docs.py`（随文档一致性检查执行） | 解析 `requirements.txt`/`requirements-dev.txt` 的 name==version 固定项，核对 `docs/third-party-notices.md` 是否列出且版本一致；3 项 pytest 覆盖；缺失/不一致会报问题 |
 | 脚本卫生（BOM/验收结构） | .\.venv\Scripts\python.exe -m pytest tests/test_script_hygiene.py | 所有 scripts/*.ps1 保持 UTF-8 BOM（防止 PS 5.1 解析中文脚本失败）；run_acceptance.ps1 含 11 个环节、超时助手（240/180/420/600/480 s）、单次透明重跑（Retried/FirstExitCode 留痕）、预检清理、包身份与磁盘字段；5 项 pytest 覆盖 |
@@ -41,7 +42,7 @@
 | 包内现场自检 | 解压后双击 `check-bundle.bat`，或 `python\python.exe scripts\verify_offline_bundle.py --extracted .` | 使用包内 Python，不需要开发环境 |
 | 启动耗时 | `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\measure_startup.ps1 -Exe <exe> [-LaitpHome <dir> -LaitpPython <python>]` | 记录窗口出现与自检完成时间 |
 | 打包 | `.\.venv\Scripts\python.exe scripts\build_offline_bundle.py --skip-wheels --desktop-dir dist\desktop-selfcontained --python-dir dist\python-portable --output dist\laitp-offline-lean.zip` | 重建精简包并写 `.sha256` |
-| 交接目录 | `.\.venv\Scripts\python.exe scripts\make_handoff.py --clean`（加 `--include-full` 时附带完整包） | `dist/handoff/`：ZIP、SHA、老师指南、验收清单、证据索引、交接说明、`handoff-manifest.json` |
+| 交接目录 | `.\.venv\Scripts\python.exe scripts\make_handoff.py --clean`（加 `--include-full` 时附带完整包） | `dist/handoff/`：ZIP 与 `.sha256`、README、老师指南、验收操作卡、验收清单、证据索引、已知限制、第三方许可说明、验收报告样例、交接说明、`handoff-manifest.json` |
 
 ## 3. 界面自动化与截图
 

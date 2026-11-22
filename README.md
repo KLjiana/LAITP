@@ -77,13 +77,13 @@ py -3.12 -m venv .venv
 
 - `laitp-offline-lean.zip`：**精简包**（内置便携 Python + 自包含桌面，不含 wheel，依赖已在包内）；
 - `laitp-offline-full.zip`：**完整包**（额外包含 wheel，用于目标机首次部署或依赖修复）；
-- 两个包的 `.sha256`、`README.md`、`teacher-quickstart.md`、`acceptance-card.md`、`acceptance-checklist.md`、`verification-evidence.md`、`known-limitations.md`、`acceptance-report-sample.md`、`交接说明.txt`、`handoff-manifest.json`。
+- 两个包的 `.sha256`、`README.md`、`teacher-quickstart.md`、`acceptance-card.md`、`acceptance-checklist.md`、`verification-evidence.md`、`known-limitations.md`、`third-party-notices.md`、`acceptance-report-sample.md`、`交接说明.txt`、`handoff-manifest.json`。
 
 使用流程（教师 / 目标机）：
 
 1. 将 `laitp-offline-lean.zip` 解压到本机磁盘（可用中文 / 空格路径；不要放在只读目录、U 盘或网络共享盘）。
 2. 双击包内的 `start-desktop.bat` 启动。首次启动会自动自检，状态栏显示“就绪（环境自检通过）”后即可使用。
-3. 双击 `check-bundle.bat` 做包内自检（清单摘要、推理、训练报告、桌面启动与首次自检）。
+3. 双击 `check-bundle.bat` 做包内自检（清单摘要、清单卫生、桌面自包含、manifest 环境声明、开发机路径扫描、推理、训练报告、桌面启动与首次自检）。
 4. 在解压目录内执行包内一键验收（11 个环节，约 5–6 分钟，实际耗时随机器变化）：
 
    ```powershell

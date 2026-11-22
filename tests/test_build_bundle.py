@@ -143,3 +143,42 @@ def test_write_batch_script_uses_single_crlf(tmp_path: Path) -> None:
     assert b"\r\r\n" not in raw
     assert raw.count(b"\r\n") == 3
     assert raw.startswith(b"@echo off\r\n")
+
+def _write(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+
+
+def test_development_path_check_ignores_docs_and_readme(tmp_path: Path) -> None:
+    builder = load_builder()
+    _write(tmp_path / "docs" / "example.md", f"开发机路径 {builder.ROOT}\demo")
+    _write(tmp_path / "README.md", f"示例 {builder.ROOT.as_posix()}")
+    _write(tmp_path / "configs" / "acceptance.v1.json", "{\"status\": \"not_frozen\"}\n")
+
+    assert builder.find_development_path_references(tmp_path) == []
+
+
+def test_development_path_check_reports_config_reference(tmp_path: Path) -> None:
+    builder = load_builder()
+    _write(
+        tmp_path / "configs" / "broken.json",
+        "{\"path\": \"" + str(builder.ROOT) + "\\data\"}\n",
+    )
+
+    problems = builder.find_development_path_references(tmp_path)
+
+    assert len(problems) == 1
+    assert "configs/broken.json" in problems[0]
+
+
+def test_development_path_check_reports_script_reference(tmp_path: Path) -> None:
+    builder = load_builder()
+    _write(
+        tmp_path / "start-desktop.bat",
+        f"set LAITP_HOME={builder.ROOT.as_posix()}\r\n",
+    )
+
+    problems = builder.find_development_path_references(tmp_path)
+
+    assert len(problems) == 1
+    assert "start-desktop.bat" in problems[0]

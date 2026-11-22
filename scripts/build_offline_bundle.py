@@ -187,6 +187,56 @@ def add_file(staging: Path, source: Path, target: str, components: list[dict]) -
     )
 
 
+BINARY_SUFFIXES = (
+    ".zip", ".dll", ".pyd", ".whl", ".pt", ".pth", ".onnx", ".pb", ".so",
+    ".exe", ".png", ".jpg", ".jpeg", ".gif", ".ico", ".gz", ".tar",
+)
+DEV_PATH_SCAN_INCLUDED_PREFIXES = (
+    "backend/", "scripts/", "configs/", "schemas/", "demo/", "desktop/",
+)
+DEV_PATH_SCAN_EXCLUDED_FILES = ("README.md", "manifest.json")
+
+
+def development_path_markers() -> list[str]:
+    """返回构建期需要拒绝的“开发机绝对路径”标记（去重、忽略大小写）。"""
+    markers: list[str] = []
+    for candidate in (ROOT, Path.home()):
+        for form in (str(candidate), candidate.as_posix()):
+            markers.append(form)
+    markers.extend(["/d/project", "/mnt/d/project"])
+    unique: list[str] = []
+    for marker in markers:
+        if marker and marker.lower() not in [item.lower() for item in unique]:
+            unique.append(marker)
+    return unique
+
+
+def find_development_path_references(staging: Path) -> list[str]:
+    """扫描暂存包内文本文件是否包含开发机绝对路径；docs/ 与 README 豁免。"""
+    markers = [marker.lower() for marker in development_path_markers()]
+    problems: list[str] = []
+    for path in sorted(staging.rglob("*")):
+        if not path.is_file():
+            continue
+        relative = path.relative_to(staging).as_posix()
+        is_root_file = "/" not in relative
+        if not is_root_file and not relative.startswith(DEV_PATH_SCAN_INCLUDED_PREFIXES):
+            continue
+        if relative in DEV_PATH_SCAN_EXCLUDED_FILES:
+            continue
+        if path.suffix.lower() in BINARY_SUFFIXES:
+            continue
+        try:
+            content = path.read_text(encoding="utf-8", errors="ignore").lower()
+        except OSError:
+            continue
+        for marker in markers:
+            if marker in content:
+                problems.append(f"{relative} 含开发机路径 {marker}")
+                break
+    return problems
+
+
 def write_readme(staging: Path, self_contained: bool, python_embedded: bool) -> None:
     desktop_line = (
         "desktop/app/    WPF 桌面程序（自包含构建，无需预装 .NET 运行时）"
@@ -358,6 +408,12 @@ def main(argv: list[str] | None = None) -> int:
 
         write_readme(staging, self_contained, python_embedded)
         add_file(staging, ROOT / "README.md", "README.md", components)
+        development_path_issues = find_development_path_references(staging)
+        if development_path_issues:
+            details = "\n".join(development_path_issues[:20])
+            raise SystemExit(
+                "离线包包含开发机绝对路径，构建中止（A13 回归检查）：\n" + details
+            )
         total_bytes = sum(component["bytes"] for component in components)
         manifest = {
             "format": BUNDLE_FORMAT,

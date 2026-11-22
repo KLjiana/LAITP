@@ -24,12 +24,13 @@
 | CP936 控制台兼容验收（本机） | 在 `chcp 936` 控制台（中文+空格路径）运行 `run_acceptance.ps1 -IncludeFlow -IncludeExtended` | 修复控制台编码后，**正式包在 CP936 与默认环境下均 11/11 通过**（自检 27.8 s、自检幂等性复核 25.2 s；第 8/9/10 步 JSON 正常解析，stderr 全 0 字节）；旧版在 CP936 下这三步会因 GBK 解码 UTF-8 JSON 失败 |
 | 中文+空格路径验收（本机，非提权） | 解压到含中文与空格的临时目录后按“自检 → `run_acceptance.ps1 -IncludeFlow -IncludeExtended` → 再次自检” | **幂等通过**：首次自检 0、验收 11/11（自检 28.0 s、窗口 10.9 s、严格验收 0.5 s）、再次自检 0；打包已排除 `__pycache__`/pyc 并改写演示记录绝对路径；详见[离线分发包 §3.7](offline-bundle.md#37-自检幂等性复验与修复2026-11-19) |
 | 包内桌面自包含检查 | python\python.exe scripts\verify_offline_bundle.py --extracted .（随包内自检执行） | 校验 desktop/app 的 runtimeconfig 使用 includedFrameworks 且含 coreclr.dll/hostfxr.dll；框架依赖构建会被判失败；同时校验 start-desktop.bat 指向包内 desktop\app\Laitp.Desktop.exe（不得指向开发 bin 目录）；并校验 check-bundle.bat 含 chcp 65001、包内 python\python.exe、scripts\verify_offline_bundle.py 与 --extracted，且不含开发机绝对路径；12 项 pytest 覆盖 |
+| 构建期绝对路径断言（A13 回归） | 构建离线包时自动执行 | 扫描第一方文本（backend/scripts/configs/schemas/demo/desktop 与包根脚本/说明），命中工作区路径/用户目录/`/d/project`/`/mnt/d/project` 即中止构建；3 项 pytest 覆盖；2026-11-23 构建实测通过（无命中） |
 | 脚本卫生（BOM/验收结构） | .\.venv\Scripts\python.exe -m pytest tests/test_script_hygiene.py | 所有 scripts/*.ps1 保持 UTF-8 BOM（防止 PS 5.1 解析中文脚本失败）；run_acceptance.ps1 含 11 个环节、超时助手（240/180/420/600/480 s）、单次透明重跑（Retried/FirstExitCode 留痕）、预检清理、包身份与磁盘字段；5 项 pytest 覆盖 |
 | 交付状态快速自检 | `.\.venv\Scripts\python.exe scripts\check_state.py` | 约 1 秒：包 SHA/体积入文档并轻量校验 ZIP 内 manifest/自包含/启动脚本结构（不替代完整解包校验）、交接目录 SHA 与文件、最近一键验证、验收汇总、长时间预览稳定性、文档一致性、交接验收报告样例、交接目录文档与仓库一致共 11 项 |
 
 日常改动后用 `--quick` 做分钟级检查（只含上表 6 个快速步骤，不跑离线包校验、净环境流程、课堂演练、界面自动化与摄像头）；阶段验收或发布前仍运行完整版 `verify_all.py --ui`（摄像头自动化已按要求停止，不再加 `--camera`）。
 
-当前本机结果：Python 464 项测试通过、桌面构建 0 警告 0 错误、Core 检查 64 项通过、一键验证 16 步通过（摄像头步骤按要求跳过）；验收汇总为“已验证 9 / 部分 4 / 未执行 1（A10）/ 阻塞 1（A15）”。
+当前本机结果：Python 467 项测试通过、桌面构建 0 警告 0 错误、Core 检查 64 项通过、一键验证 16 步通过（摄像头步骤按要求跳过）；验收汇总为“已验证 9 / 部分 4 / 未执行 1（A10）/ 阻塞 1（A15）”。
 
 ## 2. 离线包
 
@@ -82,7 +83,7 @@
 
 | 领域 | 命令 | 产物/依据 |
 | --- | --- | --- |
-| 契约 Schema 与拒绝场景 | `.\.venv\Scripts\python.exe -m pytest -q` | 464 项测试 |
+| 契约 Schema 与拒绝场景 | `.\.venv\Scripts\python.exe -m pytest -q` | 467 项测试 |
 | M0 基准（训练/导出/延迟/内存） | `.\.venv\Scripts\python.exe -m benchmarks.m0_benchmark --output artifacts\benchmark-m0` | `artifacts/benchmark-m0/m0-benchmark.json` |
 | 离线环境基准 | `.\.venv-offline\Scripts\python.exe -m benchmarks.m0_benchmark --output artifacts\benchmark-m0-offline` | `artifacts/benchmark-m0-offline/m0-benchmark.json` |
 | 真实公开数据（Fashion-MNIST 3 类） | `.\.venv\Scripts\python.exe scripts\real_data_validation.py` | `artifacts/real-data/result.json`（准确率约 0.917，产物 `art-run-real-0001`） |
@@ -105,7 +106,7 @@
 | 项目 | 值 |
 | --- | --- |
 | 精简包 | `dist/laitp-offline-lean.zip`，SHA-256 见同名 `.sha256` 文件 |
-| Python 测试 | 464 passed |
+| Python 测试 | 467 passed |
 | Core 检查 | 64 项通过 |
 | 一键验证 | 16 步通过（摄像头步骤按要求跳过） |
 | 真实数据准确率 | 约 0.917（Fashion-MNIST 3 类，构造划分） |

@@ -51,3 +51,4 @@ jobs:
           tests/test_verify_offline_bundle_manifest.py
           tests/test_k230_model_probe.py
           tests/test_k230_readiness.py
+          tests/test_docs_evidence.py

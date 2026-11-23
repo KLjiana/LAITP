@@ -65,7 +65,7 @@ py -3.12 -m venv .venv
 
 ### CI（GitHub Actions）
 
-仓库包含 `.github/workflows/tooling.yml`：在 push / PR 时于 Windows runner 上解析 `scripts/*.ps1`（PowerShell Parser 0 错误）并运行 `scripts/check_docs.py` 文档一致性与工具/文档测试子集（约 80 项，不安装 torch、不构建桌面、不跑界面自动化）。完整本机验证仍按下方命令在开发机执行。
+仓库包含 `.github/workflows/tooling.yml`：在 push / PR 时于 Windows runner 上解析 `scripts/*.ps1`（PowerShell Parser 0 错误）并运行 `scripts/check_docs.py` 文档一致性与工具/文档测试子集（约 90 项，含 K230 ONNX 探测与启动条件测试，不安装 torch、不构建桌面、不跑界面自动化）。完整本机验证仍按下方命令在开发机执行。
 
 ### 完整 / 阶段验证
 

@@ -1,0 +1,93 @@
+{
+  "format": "laitp-k230-readiness-1.0",
+  "model": "D:\\project\\Python\\LAITP\\artifacts\\real-data\\fashion-project\\exports\\art-run-20261118121114\\model-package",
+  "overall": "blocked",
+  "note": "只检启动条件；ready-for-conversion-attempt 不代表转换成功或板端可运行。",
+  "blocked_count": 3,
+  "warning_count": 0,
+  "checks": [
+    {
+      "id": "toolchain-pinned",
+      "status": "blocked",
+      "detail": "未找到工具链固定配置：D:\\project\\Python\\LAITP\\configs\\k230-toolchain.json"
+    },
+    {
+      "id": "nncase-installed",
+      "status": "blocked",
+      "detail": "当前环境未安装 nncase（需按固定版本离线安装）"
+    },
+    {
+      "id": "model-static-input",
+      "status": "pass",
+      "detail": "输入 [1, 3, 224, 224]（静态）"
+    },
+    {
+      "id": "model-plan-review",
+      "status": "pass",
+      "detail": "120 个节点、922683 参数，无动态形状/高危算子提示"
+    },
+    {
+      "id": "model-manifest-digest",
+      "status": "pass",
+      "detail": "manifest SHA-256 匹配"
+    },
+    {
+      "id": "calibration-data",
+      "status": "blocked",
+      "detail": "未提供校准数据目录（--calibration-dir）"
+    }
+  ],
+  "probe": {
+    "onnx": "D:\\project\\Python\\LAITP\\artifacts\\real-data\\fashion-project\\exports\\art-run-20261118121114\\model-package\\model.onnx",
+    "sha256": "39dbf93dd3e6d85e0b5db0d28cc0aefa83e1f64e19b7ca08ffedf8390cf15e97",
+    "bytes": 3724130,
+    "ir_version": 8,
+    "opset_imports": [
+      {
+        "domain": "ai.onnx",
+        "version": 17
+      }
+    ],
+    "inputs": [
+      {
+        "name": "images",
+        "dtype": 1,
+        "shape": [
+          1,
+          3,
+          224,
+          224
+        ],
+        "dynamic": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "logits",
+        "dtype": 1,
+        "shape": [
+          1,
+          3
+        ],
+        "dynamic": false
+      }
+    ],
+    "op_counts": {
+      "Add": 6,
+      "Conv": 52,
+      "Flatten": 1,
+      "Gemm": 1,
+      "GlobalAveragePool": 10,
+      "HardSigmoid": 9,
+      "HardSwish": 18,
+      "Mul": 9,
+      "Relu": 14
+    },
+    "node_count": 120,
+    "initializer_count": 106,
+    "parameter_count": 922683,
+    "warnings": [],
+    "manifest_sha256_expected": "39dbf93dd3e6d85e0b5db0d28cc0aefa83e1f64e19b7ca08ffedf8390cf15e97",
+    "manifest_sha256_match": true
+  }
+}

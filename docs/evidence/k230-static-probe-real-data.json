@@ -1,0 +1,58 @@
+{
+  "format": "laitp-k230-static-probe-1.0",
+  "note": "静态图探测，不是 nncase 转换或板端验证；不得据此声称 K230 可运行。",
+  "probe": {
+    "onnx": "D:\\project\\Python\\LAITP\\artifacts\\real-data\\fashion-project\\exports\\art-run-20261118121114\\model-package\\model.onnx",
+    "sha256": "39dbf93dd3e6d85e0b5db0d28cc0aefa83e1f64e19b7ca08ffedf8390cf15e97",
+    "bytes": 3724130,
+    "ir_version": 8,
+    "opset_imports": [
+      {
+        "domain": "ai.onnx",
+        "version": 17
+      }
+    ],
+    "inputs": [
+      {
+        "name": "images",
+        "dtype": 1,
+        "shape": [
+          1,
+          3,
+          224,
+          224
+        ],
+        "dynamic": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "logits",
+        "dtype": 1,
+        "shape": [
+          1,
+          3
+        ],
+        "dynamic": false
+      }
+    ],
+    "op_counts": {
+      "Add": 6,
+      "Conv": 52,
+      "Flatten": 1,
+      "Gemm": 1,
+      "GlobalAveragePool": 10,
+      "HardSigmoid": 9,
+      "HardSwish": 18,
+      "Mul": 9,
+      "Relu": 14
+    },
+    "node_count": 120,
+    "initializer_count": 106,
+    "parameter_count": 922683,
+    "warnings": [],
+    "manifest_sha256_expected": "39dbf93dd3e6d85e0b5db0d28cc0aefa83e1f64e19b7ca08ffedf8390cf15e97",
+    "manifest_sha256_match": true,
+    "artifact_id": "art-run-20261118121114"
+  }
+}

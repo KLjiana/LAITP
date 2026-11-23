@@ -255,3 +255,15 @@ def test_check_docs_reports_third_party_version_mismatch(tmp_path: Path) -> None
 
     assert len(issues) == 1
     assert "不一致" in issues[0]
+
+def test_check_docs_scans_subdirectories(tmp_path: Path) -> None:
+    module = load_check_docs("check_docs_subdir")
+    nested = tmp_path / "evidence"
+    nested.mkdir()
+    (nested / "README.md").write_text("[缺失](../missing.md)\n", encoding="utf-8")
+
+    broken = module.find_broken_links(tmp_path)
+
+    assert len(broken) == 1
+    assert "README.md" in broken[0]
+    assert "missing.md" in broken[0]

@@ -170,5 +170,5 @@
 - **清单环境一致性**：包内自检核对 `manifest.environment` 的 `platform`、`python_embedded`、`desktop_self_contained` 声明与包内实际一致（3 项 pytest）。
 - **依赖与许可一致性**：`check_docs` 核对 `requirements*.txt` 固定版本与第三方许可说明表格一致（3 项 pytest）。
 - **包内自检扩展**：桌面自包含、启动脚本指向、`check-bundle.bat` 内容等检查持续生效；验收报告含包身份（manifest 摘要）与长路径/包目录长度等环境信息。
-- **测试与产物**：487 项 pytest、Core 64 项、16 步一键验证、11 环节包内验收；正式包清单 18,172 文件（精简）/18,206（完整），SHA/体积以[离线分包说明](offline-bundle.md)为准。
+- **测试与产物**：488 项 pytest、Core 64 项、16 步一键验证、11 环节包内验收；正式包清单 18,172 文件（精简）/18,206（完整），SHA/体积以[离线分包说明](offline-bundle.md)为准。
 - **边界不变**：仍未在干净目标机、真正断网、普通用户权限、真实课堂数据或 K230/K210 板端验证；检测（M3）仍为草案/未激活。

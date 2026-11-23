@@ -46,7 +46,7 @@ def find_broken_links_in(paths: list[Path]) -> list[str]:
 
 def find_broken_links(docs_dir: Path) -> list[str]:
     """返回 docs 目录下 Markdown 的失效本地链接（忽略外链与纯锚点）。"""
-    return find_broken_links_in(sorted(docs_dir.glob("*.md")))
+    return find_broken_links_in(sorted(docs_dir.rglob("*.md")))
 
 
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)$")
@@ -221,8 +221,11 @@ def main() -> int:
 
     problems: list[str] = []
     notes: list[str] = []
-    doc_paths = sorted(DOCS.glob("*.md"))
-    texts = {path.name: path.read_text(encoding="utf-8") for path in doc_paths}
+    doc_paths = sorted(DOCS.rglob("*.md"))
+    texts = {
+        path.relative_to(DOCS).as_posix(): path.read_text(encoding="utf-8")
+        for path in doc_paths
+    }
     for broken in find_broken_links(DOCS):
         problems.append(f"文档链接失效：{broken}")
     for broken in find_broken_anchors(doc_paths):

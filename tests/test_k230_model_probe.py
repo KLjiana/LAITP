@@ -77,3 +77,10 @@ def test_resolve_onnx_from_model_package(tmp_path: Path) -> None:
     )
 
     assert probe.resolve_onnx(model_dir) == (model_dir / "model.onnx").resolve()
+
+def test_display_path_uses_relative_for_repo_files(tmp_path: Path) -> None:
+    probe = load_probe()
+
+    assert probe.display_path(ROOT / "scripts" / "k230_model_probe.py") == "scripts/k230_model_probe.py"
+    outside = tmp_path / "model.onnx"
+    assert probe.display_path(outside) == str(outside.resolve())

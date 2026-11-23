@@ -38,7 +38,7 @@ def check_toolchain(toolchain_config: Path) -> dict:
         return {
             "id": "toolchain-pinned",
             "status": "blocked",
-            "detail": f"未找到工具链固定配置：{toolchain_config}",
+            "detail": f"未找到工具链固定配置：{load_probe().display_path(toolchain_config)}",
         }
     try:
         data = json.loads(toolchain_config.read_text(encoding="utf-8"))
@@ -88,7 +88,7 @@ def check_calibration(calibration_dir: Path | None, minimum: int = 20) -> dict:
         return {
             "id": "calibration-data",
             "status": "blocked",
-            "detail": f"校准数据目录不存在：{calibration_dir}",
+            "detail": f"校准数据目录不存在：{load_probe().display_path(calibration_dir)}",
         }
     count = sum(
         1
@@ -192,7 +192,7 @@ def build_report(
     warnings = [item for item in checks if item["status"] == "warn"]
     return {
         "format": "laitp-k230-readiness-1.0",
-        "model": str(model_dir),
+        "model": load_probe().display_path(model_dir),
         "overall": "blocked" if blocked else "ready-for-conversion-attempt",
         "note": "只检启动条件；ready-for-conversion-attempt 不代表转换成功或板端可运行。",
         "blocked_count": len(blocked),

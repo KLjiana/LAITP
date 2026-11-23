@@ -1,6 +1,6 @@
 {
   "format": "laitp-k230-readiness-1.0",
-  "model": "D:\\project\\Python\\LAITP\\artifacts\\real-data\\fashion-project\\exports\\art-run-20261118121114\\model-package",
+  "model": "artifacts/real-data/fashion-project/exports/art-run-20261118121114/model-package",
   "overall": "blocked",
   "note": "只检启动条件；ready-for-conversion-attempt 不代表转换成功或板端可运行。",
   "blocked_count": 3,
@@ -9,7 +9,7 @@
     {
       "id": "toolchain-pinned",
       "status": "blocked",
-      "detail": "未找到工具链固定配置：D:\\project\\Python\\LAITP\\configs\\k230-toolchain.json"
+      "detail": "未找到工具链固定配置：configs/k230-toolchain.json"
     },
     {
       "id": "nncase-installed",
@@ -38,7 +38,7 @@
     }
   ],
   "probe": {
-    "onnx": "D:\\project\\Python\\LAITP\\artifacts\\real-data\\fashion-project\\exports\\art-run-20261118121114\\model-package\\model.onnx",
+    "onnx": "artifacts/real-data/fashion-project/exports/art-run-20261118121114/model-package/model.onnx",
     "sha256": "39dbf93dd3e6d85e0b5db0d28cc0aefa83e1f64e19b7ca08ffedf8390cf15e97",
     "bytes": 3724130,
     "ir_version": 8,

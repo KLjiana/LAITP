@@ -2,7 +2,7 @@
   "format": "laitp-k230-static-probe-1.0",
   "note": "静态图探测，不是 nncase 转换或板端验证；不得据此声称 K230 可运行。",
   "probe": {
-    "onnx": "D:\\project\\Python\\LAITP\\artifacts\\real-data\\fashion-project\\exports\\art-run-20261118121114\\model-package\\model.onnx",
+    "onnx": "artifacts/real-data/fashion-project/exports/art-run-20261118121114/model-package/model.onnx",
     "sha256": "39dbf93dd3e6d85e0b5db0d28cc0aefa83e1f64e19b7ca08ffedf8390cf15e97",
     "bytes": 3724130,
     "ir_version": 8,

@@ -43,6 +43,14 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def display_path(path: Path) -> str:
+    """仓库内路径用相对形式输出，便于随仓库分发；仓库外保留绝对路径。"""
+    try:
+        return path.resolve().relative_to(ROOT).as_posix()
+    except ValueError:
+        return str(path.resolve())
+
+
 def _tensor_brief(value_info) -> dict:
     tensor = value_info.type.tensor_type
     shape = []
@@ -89,7 +97,7 @@ def probe_onnx(onnx_path: Path) -> dict:
             "含需人工核对语义/参数的算子：" + "、".join(attention) + "（需按 nncase 目标版本算子表逐项确认）"
         )
     return {
-        "onnx": str(onnx_path),
+        "onnx": display_path(onnx_path),
         "sha256": sha256_file(onnx_path),
         "bytes": onnx_path.stat().st_size,
         "ir_version": int(model.ir_version),

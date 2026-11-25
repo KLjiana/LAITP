@@ -20,7 +20,7 @@
 
 部分完成或受阻：摄像头采集（物理设备被禁用，A11 仍为部分完成）、课堂真实数据采集、K230/K210 板端转换与部署。
 
-A1–A15 的逐项状态、证据与剩余动作（本机待做/目标机待做/硬件阻塞）见[验收清单 §8 当前状态矩阵](acceptance-checklist.md#8-当前状态矩阵2026-11-19)；状态以 `artifacts/acceptance-local.json` 为准，本报告不逐项重复。
+A1–A15 的逐项状态、证据与剩余动作（本机待做/目标机待做/硬件阻塞）见[验收清单 §8 当前状态矩阵](acceptance-checklist.md#8-当前状态矩阵截至-2026-11-23)；状态以 `artifacts/acceptance-local.json` 为准，本报告不逐项重复。
 
 ## 2. 验证证据（本机，2026-11-18/19/20/23）
 
@@ -43,7 +43,7 @@ A1–A15 的逐项状态、证据与剩余动作（本机待做/目标机待做/
 | 另存为 | `ui_flow.ps1 -SaveAsDir <dir>` | 复制项目目录并切换；状态“已另存为：…”，新目录含 project.json/data/exports/runs，数据检查通过 |
 | 数据集体检 | `scripts/dataset_report.py`（CLI）+ 界面“数据体检/打开体检报告” | 每类每批次样本、重复/无效图片、尺寸分布与分级风险提示；输出 Markdown + 可选 CSV；4 项 pytest 覆盖；界面自动化实测 150 张样本并生成报告，报告可直接打开 |
 | 项目校验 | 界面“校验项目” + `python -m backend.project verify --root <项目目录>` | 只读校验 project.json/Schema、数据清单类别、模型产物摘要；失败列出问题；CLI 正常/异常项目实测通过 |
-| 验收证据汇总 | `scripts/acceptance_audit.py` | 生成 `artifacts/acceptance-local.json/md`：A1–A15 中已验证 9、部分 4、未执行 1（A10 课堂数据）、阻塞 1（A15 板端）；逐项矩阵见[验收清单 §8](acceptance-checklist.md#8-当前状态矩阵2026-11-19) |
+| 验收证据汇总 | `scripts/acceptance_audit.py` | 生成 `artifacts/acceptance-local.json/md`：A1–A15 中已验证 9、部分 4、未执行 1（A10 课堂数据）、阻塞 1（A15 板端）；逐项矩阵见[验收清单 §8](acceptance-checklist.md#8-当前状态矩阵截至-2026-11-23) |
 | 证据索引 | [验证证据索引](verification-evidence.md) | 汇总可复现命令、产物路径、截图与目标机留证建议 |
 | M3 准备（规划） | [K230 板端可行性准备](k230-feasibility.md) | 前置条件、未知项、验证门槛与所需外部输入；**未实现、未验证** |
 | 文档一致性 | `scripts/check_docs.py` | 核对包 SHA/体积、测试数、Core 数、验证步数、过期缩写 SHA、依赖版本与第三方许可说明一致，以及 Markdown 链接/锚点（本机通过） |

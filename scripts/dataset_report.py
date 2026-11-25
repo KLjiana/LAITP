@@ -872,6 +872,11 @@ def _emit_error(project: str | Path, code: str, message: str) -> None:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, OSError):
+        pass
     args = _build_parser().parse_args(argv)
     try:
         result = generate_report(

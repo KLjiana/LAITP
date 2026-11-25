@@ -270,6 +270,11 @@ def run_backend(
 
 
 def main(argv: list[str] | None = None) -> int:
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, OSError):
+        pass
     parser = argparse.ArgumentParser(description="校验 LAITP 离线分发包")
     parser.add_argument("--bundle", default=None, help="离线包 zip 路径")
     parser.add_argument(

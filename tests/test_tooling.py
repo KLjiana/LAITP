@@ -286,6 +286,7 @@ def test_script_help_commands_exit_zero() -> None:
             encoding="utf-8",
             errors="replace",
             timeout=120,
+            env={**__import__("os").environ, "PYTHONIOENCODING": "utf-8"},
         )
         assert completed.returncode == 0, f"{name} --help 失败：{completed.stderr[:800]}"
 
@@ -303,6 +304,7 @@ def _script_help(name: str, subcommand: str | None, cache: dict) -> str:
             encoding="utf-8",
             errors="replace",
             timeout=180,
+            env={**__import__("os").environ, "PYTHONIOENCODING": "utf-8"},
         )
         cache[key] = completed.stdout + completed.stderr
     return cache[key]

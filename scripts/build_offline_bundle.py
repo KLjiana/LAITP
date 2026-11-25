@@ -9,6 +9,8 @@ docs/offline-bundle.md 的说明。产物写入 dist/（已忽略，不提交）
 
 from __future__ import annotations
 
+import sys
+
 import argparse
 import hashlib
 import json
@@ -336,6 +338,11 @@ manifest.json 记录每个文件的 SHA-256；可用 scripts/verify_offline_bund
 
 
 def main(argv: list[str] | None = None) -> int:
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, OSError):
+        pass
     parser = argparse.ArgumentParser(description="构建 LAITP 离线分发包")
     parser.add_argument("--output", default=None, help="输出 ZIP 路径（默认 dist/laitp-offline-<日期>.zip）")
     parser.add_argument("--skip-wheels", action="store_true", help="不打包 vendor/wheels")

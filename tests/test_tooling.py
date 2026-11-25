@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -287,3 +288,50 @@ def test_script_help_commands_exit_zero() -> None:
             timeout=120,
         )
         assert completed.returncode == 0, f"{name} --help 失败：{completed.stderr[:800]}"
+
+def _script_help(name: str, subcommand: str | None, cache: dict) -> str:
+    key = (name, subcommand)
+    if key not in cache:
+        command = [sys.executable, str(ROOT / "scripts" / name)]
+        if subcommand:
+            command.append(subcommand)
+        command.append("--help")
+        completed = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=180,
+        )
+        cache[key] = completed.stdout + completed.stderr
+    return cache[key]
+
+
+def test_documentation_commands_match_script_help() -> None:
+    import re as _re
+
+    documents = [ROOT / "README.md", *sorted((ROOT / "docs").glob("*.md"))]
+    cache: dict = {}
+    problems: list[str] = []
+    flag_re = _re.compile(r"(?<!\S)(--[A-Za-z0-9_\-]+)")
+    tail_re = _re.compile(r"[A-Za-z0-9_\-\.\\/:\s<>\[\]{}]+")
+    script_re = _re.compile(r"scripts[\\/]([A-Za-z0-9_\-]+\.py)([^`\n]*)")
+    for document in documents:
+        for line in document.read_text(encoding="utf-8").splitlines():
+            for match in script_re.finditer(line):
+                name = match.group(1)
+                if not (ROOT / "scripts" / name).is_file():
+                    continue
+                tail_match = tail_re.match(match.group(2))
+                tail = tail_match.group(0) if tail_match else ""
+                flags = {flag for flag in flag_re.findall(tail) if flag != "--help"}
+                if not flags:
+                    continue
+                tokens = [token for token in tail.split() if not token.startswith("-")]
+                subcommand = tokens[0] if tokens else None
+                help_text = _script_help(name, subcommand, cache)
+                for flag in sorted(flags):
+                    if flag not in help_text:
+                        problems.append(f"{document.name}: {name} 不支持 {flag}")
+    assert not problems, "\n".join(problems)

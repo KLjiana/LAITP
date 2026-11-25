@@ -56,6 +56,9 @@ REQUIRED_BUNDLE_SCRIPTS = (
     "scripts/verify_offline_bundle.py",
     "scripts/run_acceptance.ps1",
     "scripts/preflight_target.py",
+    "scripts/collect_evidence.py",
+    "scripts/dataset_report.py",
+    "scripts/batch_history_export.py",
 )
 
 

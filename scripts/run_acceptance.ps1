@@ -926,6 +926,11 @@ finally {
         [void]$report.AppendLine("| $($step.name) | $($step.status) | $($step.seconds) |")
     }
     [void]$report.AppendLine()
+    [void]$report.AppendLine("## 收集回传证据")
+    [void]$report.AppendLine()
+    [void]$report.AppendLine("可在包目录执行：python\\python.exe scripts\\collect_evidence.py")
+    [void]$report.AppendLine("生成带 evidence-manifest.json（逐文件 SHA-256/缺失项）的 ZIP，便于回传。")
+    [void]$report.AppendLine()
     [void]$report.AppendLine("## 结论")
     [void]$report.AppendLine()
     if ($result.ok) {

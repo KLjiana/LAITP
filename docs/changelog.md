@@ -163,6 +163,11 @@
 - 本文不改变验收结论；目标机验收结果仍记录在[验收清单](acceptance-checklist.md)与现场记录中。
 - 条目日期取证据文档日期；跨日迭代用范围概括，避免在本文复制易过期的 SHA、体积等具体值。
 
+## 9. 2026-11-25 维护更新
+
+- **CLI 可移植性**：`detection_draft_check`、`dataset_report`、`verify_offline_bundle` 等脚本统一把标准输出/错误重配置为 UTF-8，修复英文 Windows（cp1252）控制台下中文 `--help` 触发 `UnicodeEncodeError` 崩溃。
+- **CI 诊断与依赖**：CI 增加测试失败摘要注解（便于在无日志权限时定位）；安装 `pillow/jsonschema/numpy` 以运行文档命令与 K230 探测测试；GitHub Actions 2026-11-25 平台事件期间的失败不作为代码回归证据。
+
 ## 8. 2026-11-23 维护更新
 
 - **新增文档**：[已知限制与验收边界](known-limitations.md)、[第三方组件与许可说明](third-party-notices.md)；交接目录与 `check_state` 交接文档一致性（7 份文档副本 + 报告样例）同步纳入。

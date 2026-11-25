@@ -246,7 +246,9 @@ python\python.exe scripts\dataset_report.py --project <项目目录>
      ```
   6. 保留上述文件、`check-bundle` 完整输出与失败截图，按第 6 节记录；需要开发侧分析时附上包 SHA-256 与 `manifest.json` 的 `created_at`。
 
-## 8. 当前状态矩阵（2026-11-19）
+## 8. 当前状态矩阵（截至 2026-11-23）
+
+> 本节状态基于 2026-11-23 的正式包与本机证据（SHA/体积随重建变化，以[离线分包说明](offline-bundle.md)为准）；外部项（目标机、普通用户、断网、课堂、K230/K210、检测）仍为未验证。
 
 本矩阵把 A1–A15 的当前状态、关键证据与剩余动作集中列出，供交接和目标机验收排期使用。状态取自 `scripts/acceptance_audit.py` 生成的 `artifacts/acceptance-local.json`（生成时间以该文件 `generated_at` 为准；汇总：已验证 9、部分 4、未执行 1、阻塞 1），**不自行提升**；证据用文档相对链接索引，包 SHA-256、文件数等易随重建变化的数字不在此重复。
 

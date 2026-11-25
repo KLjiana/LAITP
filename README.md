@@ -134,6 +134,7 @@ py -3.12 -m venv .venv
 | [变更记录](docs/changelog.md) | 按 M0–M5 里程碑汇总已交付内容、验证程度与草案边界 |
 | [检测课可行性规划](docs/detection-feasibility.md) | M3 检测课的范围、门槛与任务拆分（规划，未实现） |
 | [检测契约与标注/结果格式草案](docs/detection-contract-draft.md) | 检测契约扩展与标注 / 结果格式候选文本（草案，未激活） |
+| [检测决策登记表](docs/detection-decision-log.md) | Q1–Q8 待决项的登记入口（日期/负责人/决定/修改点） |
 | [检测待决问题决策建议](docs/detection-decisions.md) | Q1–Q8 决策建议稿（未决策，检测未实现） |
 
 接手建议阅读顺序：先读本页与[项目状态报告](docs/status-report.md)，再按需查[总体路线与项目大纲](docs/roadmap.md)、[验证证据索引](docs/verification-evidence.md)、[目标机离线验收清单](docs/acceptance-checklist.md)、[离线分发包](docs/offline-bundle.md)与[仓库开发约定](AGENTS.md)。

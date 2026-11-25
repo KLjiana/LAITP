@@ -20,7 +20,7 @@
 | 完整本机验证（16 步，约 10 分钟） | `.\.venv\Scripts\python.exe scripts\verify_all.py --ui` | `artifacts/verify-all/verify-all.json`、`verify-all.txt` |
 | 含摄像头的历史命令（17 步；需可用摄像头，自动化测试已于 2026-11-18 停止，仅供人工复验） | `.\.venv\Scripts\python.exe scripts\verify_all.py --ui --camera` | 同上 |
 | 验收项证据汇总（A1–A15） | `.\.venv\Scripts\python.exe scripts\acceptance_audit.py` | `artifacts/acceptance-local.json`、`acceptance-local.md` |
-| 文档一致性检查 | `.\.venv\Scripts\python.exe scripts\check_docs.py` | 核对当前包 SHA/体积、测试数、Core 检查数、验证步数、过期缩写 SHA、依赖版本与 `third-party-notices.md` 一致，以及 docs 与根 README 的 Markdown 本地链接与 #锚点；退出码 0 表示一致 |
+| 文档一致性检查 | `.\.venv\Scripts\python.exe scripts\check_docs.py` | 核对当前包 SHA/体积/清单文件数、测试数、Core 检查数、验证步数、过期缩写 SHA、依赖版本与 `third-party-notices.md` 一致，以及 docs 与根 README 的 Markdown 本地链接与 #锚点；退出码 0 表示一致 |
 | CP936 控制台兼容验收（本机） | 在 `chcp 936` 控制台（中文+空格路径）运行 `run_acceptance.ps1 -IncludeFlow -IncludeExtended` | 修复控制台编码后，**正式包在 CP936 与默认环境下均 11/11 通过**（自检 27.8 s、自检幂等性复核 25.2 s；第 8/9/10 步 JSON 正常解析，stderr 全 0 字节）；旧版在 CP936 下这三步会因 GBK 解码 UTF-8 JSON 失败 |
 | 中文+空格路径验收（本机，非提权） | 解压到含中文与空格的临时目录后按“自检 → `run_acceptance.ps1 -IncludeFlow -IncludeExtended` → 再次自检” | **幂等通过**：首次自检 0、验收 11/11（自检 28.0 s、窗口 10.9 s、严格验收 0.5 s）、再次自检 0；打包已排除 `__pycache__`/pyc 并改写演示记录绝对路径；详见[离线分发包 §3.7](offline-bundle.md#37-自检幂等性复验与修复2026-11-19) |
 | 包内桌面自包含检查 | python\python.exe scripts\verify_offline_bundle.py --extracted .（随包内自检执行） | 校验 desktop/app 的 runtimeconfig 使用 includedFrameworks 且含 coreclr.dll/hostfxr.dll；框架依赖构建会被判失败；同时校验 start-desktop.bat 指向包内 desktop\app\Laitp.Desktop.exe（不得指向开发 bin 目录）；并校验 check-bundle.bat 含 chcp 65001、包内 python\python.exe、scripts\verify_offline_bundle.py 与 --extracted，且不含开发机绝对路径；12 项 pytest 覆盖 |
@@ -31,7 +31,7 @@
 | K230 转换前置静态探测 | `python scripts/k230_model_probe.py --model <模型包> --output artifacts/k230-probe/*.json` | 只读 ONNX 图事实（算子分布、输入输出形状/动态维度、参数量、opset、manifest SHA 匹配），不运行 nncase、不量化、不接触板卡；3 项 pytest 覆盖；结果不得当作转换或板端验证 |
 | K230 转换启动条件自检 | `python scripts/k230_readiness.py --model <模型包> --output artifacts/k230-probe/*.json` | 检查工具链固定配置、nncase 安装、模型静态输入/算子提示、manifest 摘要与校准数据；本机实测 blocked（缺工具链/nncase/校准数据），模型侧通过；3 项 pytest 覆盖；ready-for-conversion-attempt 仅表示可尝试，不代表转换成功或板端可运行 |
 | 仓库证据 JSON 校验 | `pytest -q tests/test_docs_evidence.py` | 校验 `docs/evidence/*.json` 可解析、format 正确、不含开发机绝对路径、readiness 结构完整；3 项测试；防止归档证据损坏或再次引入开发机路径 |
-| GitHub Actions 工具/文档 CI | push 触发 `.github/workflows/tooling.yml`（windows-latest） | 运行成功（2026-11-25 run 27 在 UTF-8 控制台修复后通过；2026-11-23：run 45080969289 首次通过；run 45081434292 在新增本地 Parser 检查后通过；run 45082936242 在新增 check_docs 步骤后通过；run 45083395984 在加入 K230 静态探测脚本后通过）：`scripts/*.ps1` PowerShell 解析 0 错误，`scripts/check_docs.py` 文档一致性通过（无 dist 时跳过 SHA/体积），工具/文档测试子集（81 项）通过，已追加 K230 ONNX 探测/启动条件测试（CI 改为约 90 项）；CI 仅安装 pytest/onnx/pillow/jsonschema/numpy（不装 torch、不构建桌面、不跑界面自动化）；完整验证仍以开发机运行结果为准 |
+| GitHub Actions 工具/文档 CI | push 触发 `.github/workflows/tooling.yml`（windows-latest） | 运行成功（2026-11-25 run 27 在 UTF-8 控制台修复后通过；2026-11-23：run 45080969289 首次通过；run 45081434292 在新增本地 Parser 检查后通过；run 45082936242 在新增 check_docs 步骤后通过；run 45083395984 在加入 K230 静态探测脚本后通过）：`scripts/*.ps1` PowerShell 解析 0 错误，`scripts/check_docs.py` 文档一致性通过（无 dist 时跳过 SHA/体积），工具/文档测试子集（约 100 项，本机收集 97 项）通过，含 K230 ONNX 探测/启动条件、文档命令参数（Python/PowerShell）、仓库证据 JSON、源码非法转义与清单文件数一致性检查；工作流以 concurrency 自动取消旧运行、job 超时 15 分钟，测试失败时输出摘要注解；CI 仅安装 pytest/onnx/pillow/jsonschema/numpy（不装 torch、不构建桌面、不跑界面自动化）；完整验证仍以开发机运行结果为准 |
 | PowerShell 解析检查（本地 + CI） | `pytest -q tests/test_script_hygiene.py::test_powershell_scripts_parse` （无 PowerShell 时自动 skip） | 调用 PowerShell Parser 逐个解析 `scripts/*.ps1`，任一语法错误即失败；本地与 GitHub Actions 均执行；与 CI 工作流中的解析步骤互为双保险 |
 | 清单文件数与文档一致 | `scripts/check_docs.py`（随文档一致性检查执行） | 读取精简/完整包 `manifest.json` 的组件文件总数，校验 `offline-bundle.md` 含当前数值；1 项测试；防止文档文件数与实际包漂移 |
 | 源码非法转义/语法警告 | `pytest -q tests/test_script_hygiene.py::test_python_sources_have_no_invalid_escape_warnings` | 以 `SyntaxWarning` 为错误编译 `scripts/`、`tests/`、`backend/` 全部 Python 源文件；修复测试夹具中 `\d` 非法转义；1 项测试 |
@@ -113,7 +113,7 @@
 3. 摄像头项额外保存 `ui_camera.ps1 -Screenshot` 生成的预览截图。
 4. 将 `artifacts/` 与验收记录一并归档；`artifacts/` 不在版本库中，需单独备份。
 
-## 6. 当前证据快照（2026-11-23）
+## 6. 当前证据快照（2026-11-26）
 
 | 项目 | 值 |
 | --- | --- |

@@ -1,6 +1,6 @@
 # LAITP 变更记录（按里程碑）
 
-编制日期：2026-11-19；最近更新：2026-11-23
+编制日期：2026-11-19；最近更新：2026-11-26
 
 状态：交接、教学与验收辅助记录。本文只汇总**开发机已有证据支持**的交付与草案，**不构成验收结论**。检测（M3）尚未实现。
 
@@ -163,11 +163,6 @@
 - 本文不改变验收结论；目标机验收结果仍记录在[验收清单](acceptance-checklist.md)与现场记录中。
 - 条目日期取证据文档日期；跨日迭代用范围概括，避免在本文复制易过期的 SHA、体积等具体值。
 
-## 9. 2026-11-25 维护更新
-
-- **CLI 可移植性**：`detection_draft_check`、`dataset_report`、`verify_offline_bundle` 等脚本统一把标准输出/错误重配置为 UTF-8，修复英文 Windows（cp1252）控制台下中文 `--help` 触发 `UnicodeEncodeError` 崩溃。
-- **CI 诊断与依赖**：CI 增加测试失败摘要注解（便于在无日志权限时定位）；安装 `pillow/jsonschema/numpy` 以运行文档命令与 K230 探测测试；GitHub Actions 2026-11-25 平台事件期间的失败不作为代码回归证据。
-
 ## 8. 2026-11-23 维护更新
 
 - **新增文档**：[已知限制与验收边界](known-limitations.md)、[第三方组件与许可说明](third-party-notices.md)；交接目录与 `check_state` 交接文档一致性（7 份文档副本 + 报告样例）同步纳入。
@@ -175,5 +170,14 @@
 - **清单环境一致性**：包内自检核对 `manifest.environment` 的 `platform`、`python_embedded`、`desktop_self_contained` 声明与包内实际一致（3 项 pytest）。
 - **依赖与许可一致性**：`check_docs` 核对 `requirements*.txt` 固定版本与第三方许可说明表格一致（3 项 pytest）。
 - **包内自检扩展**：桌面自包含、启动脚本指向、`check-bundle.bat` 内容等检查持续生效；验收报告含包身份（manifest 摘要）与长路径/包目录长度等环境信息。
+
+## 9. 2026-11-25 维护更新
+
+- **CLI 可移植性**：`detection_draft_check`、`dataset_report`、`verify_offline_bundle` 等脚本统一把标准输出/错误重配置为 UTF-8，修复英文 Windows（cp1252）控制台下中文 `--help` 触发 `UnicodeEncodeError` 崩溃。
+- **CI 诊断与依赖**：CI 增加测试失败摘要注解（便于在无日志权限时定位）；安装 `pillow/jsonschema/numpy` 以运行文档命令与 K230 探测测试；GitHub Actions 2026-11-25 平台事件期间的失败不作为代码回归证据。
+
+## 10. 2026-11-26 维护更新
+
 - **测试与产物**：496 项 pytest、Core 64 项、16 步一键验证、11 环节包内验收；正式包清单 18,176 文件（精简）/18,210（完整），SHA/体积以[离线分包说明](offline-bundle.md)为准。
+- **新增检查**：`check_docs` 读取精简/完整包 `manifest.json` 核对文档清单文件数（1 项 pytest）；新增源码非法转义/语法警告检查（1 项 pytest）。
 - **边界不变**：仍未在干净目标机、真正断网、普通用户权限、真实课堂数据或 K230/K210 板端验证；检测（M3）仍为草案/未激活。

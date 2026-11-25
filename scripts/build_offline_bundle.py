@@ -55,6 +55,7 @@ BUNDLE_SCRIPTS = (
     ("scripts/project_archive.py", "scripts/project_archive.py"),
     ("scripts/batch_history_export.py", "scripts/batch_history_export.py"),
     ("scripts/dataset_report.py", "scripts/dataset_report.py"),
+    ("scripts/preflight_target.py", "scripts/preflight_target.py"),
     ("scripts/run_acceptance.ps1", "scripts/run_acceptance.ps1"),
     ("scripts/make_demo_dataset.py", "scripts/make_demo_dataset.py"),
 )

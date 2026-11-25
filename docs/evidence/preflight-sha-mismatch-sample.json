@@ -1,0 +1,51 @@
+{
+  "format": "laitp-target-preflight-1.0",
+  "checked_at": "2026-11-26T04:31:23+08:00",
+  "target": "dist\\laitp-offline-lean.zip",
+  "overall": "blocked",
+  "blocker_count": 1,
+  "warning_count": 0,
+  "note": "仅检查本机环境与包完整性；不代表 11 环节验收通过，也不替代目标机验收。",
+  "checks": [
+    {
+      "id": "platform",
+      "status": "pass",
+      "detail": "Windows / AMD64"
+    },
+    {
+      "id": "privilege",
+      "status": "pass",
+      "detail": "非管理员进程"
+    },
+    {
+      "id": "root-path-length",
+      "status": "pass",
+      "detail": "包根路径 27 字符"
+    },
+    {
+      "id": "disk-free",
+      "status": "pass",
+      "detail": "剩余空间 7.29 GiB"
+    },
+    {
+      "id": "bundle-sha256",
+      "status": "blocker",
+      "detail": "SHA-256 不匹配：期望 0000000000000000…，实际 5f898865742697f7…"
+    },
+    {
+      "id": "memory",
+      "status": "pass",
+      "detail": "物理内存 15.8 GiB"
+    },
+    {
+      "id": "long-paths",
+      "status": "pass",
+      "detail": "LongPathsEnabled=1"
+    },
+    {
+      "id": "console-code-page",
+      "status": "pass",
+      "detail": "控制台代码页 936（中文 Windows 常见值）"
+    }
+  ]
+}

@@ -11,6 +11,7 @@ import hashlib
 import json
 import re
 import sys
+import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -213,6 +214,21 @@ def find_dependency_notice_issues(
     return issues
 
 
+def bundle_manifest_file_counts(bundle: Path) -> dict[str, int] | None:
+    """从离线包 manifest.json 统计各组件文件总数（精简=1 包，完整=1 包）。"""
+    if not bundle.is_file():
+        return None
+    try:
+        with zipfile.ZipFile(bundle) as archive:
+            payload = json.loads(archive.read("manifest.json").decode("utf-8"))
+    except (KeyError, OSError, ValueError):
+        return None
+    total = 0
+    for component in payload.get("components") or []:
+        total += len(component.get("files") or [])
+    return {"file_count": total}
+
+
 def main() -> int:
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -271,6 +287,22 @@ def main() -> int:
                     )
     else:
         notes.append("未找到 dist/laitp-offline-lean.zip，跳过 SHA/体积核对")
+
+    lean_counts = bundle_manifest_file_counts(bundle)
+    if lean_counts:
+        lean_count = lean_counts["file_count"]
+        offline_text = texts.get("offline-bundle.md", "")
+        if f"{lean_count:,}" not in offline_text:
+            problems.append(
+                f"offline-bundle.md 未包含当前精简包清单文件数（{lean_count:,}）"
+            )
+        if full_bundle.is_file():
+            full_counts = bundle_manifest_file_counts(full_bundle)
+            if full_counts and f"{full_counts['file_count']:,}" not in offline_text:
+                problems.append(
+                    "offline-bundle.md 未包含当前完整包清单文件数"
+                    f"（{full_counts['file_count']:,}）"
+                )
 
     # “passed”只比较当前状态类文档；历史规划文档保留当时的测试数。
     passed = unique_counts(

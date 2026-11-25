@@ -359,3 +359,23 @@ def test_documentation_powershell_commands_match_script_params() -> None:
                     if flag not in params_cache[name]:
                         problems.append(f"{document.name}: {name} 无参数 -{flag}")
     assert not problems, "\n".join(problems)
+
+def test_check_docs_reads_bundle_manifest_file_count(tmp_path: Path) -> None:
+    import zipfile
+
+    module = load_check_docs("check_docs_file_count")
+    bundle = tmp_path / "bundle.zip"
+    manifest = {
+        "format": "laitp-offline-bundle-1.0",
+        "components": [
+            {"name": "backend", "files": ["a.py", "b.py"]},
+            {"name": "desktop", "files": ["app.exe"]},
+        ],
+    }
+    with zipfile.ZipFile(bundle, "w") as archive:
+        archive.writestr("manifest.json", json.dumps(manifest))
+
+    counts = module.bundle_manifest_file_counts(bundle)
+
+    assert counts == {"file_count": 3}
+    assert module.bundle_manifest_file_counts(tmp_path / "missing.zip") is None

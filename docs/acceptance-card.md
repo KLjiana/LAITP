@@ -26,7 +26,7 @@ cd .\laitp
 
 看到自检通过（清单卫生、启动脚本指向、桌面自包含、check-bundle.bat 内容、manifest 环境声明、开发机路径扫描、清单摘要、Python 依赖、推理、训练报告、桌面启动、首次自检）后继续。
 
-**可选环境预检（只读，不启动界面）**：
+**环境预检**：一键验收脚本会先自动执行只读环境预检，并把结果写入 `acceptance-run.json` 的 `preflight` 字段与 `acceptance-report.md` 的“环境预检”章节；也可手动单独运行（只读，不启动界面）：
 
 ```powershell
 .\python\python.exe scripts\preflight_target.py --root .

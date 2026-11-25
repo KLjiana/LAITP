@@ -81,6 +81,7 @@ $result = [ordered]@{
     python = $python
     exe = $Exe
     bundle = $bundle
+    preflight = $null
     warnings = @($bundleWarnings)
     steps = @()
     report = $null
@@ -308,6 +309,34 @@ function Get-UiRetryNote {
 }
 
 try {
+    # 环境预检（只读；不单独计为一个验收环节，结果写入 preflight 字段与报告）
+    $preflightOut = Join-Path $artifacts "preflight-target.json"
+    $preflightRaw = (& $python (Join-Path $root "scripts/preflight_target.py") --root $root --output $preflightOut 2>&1 | Out-String)
+    $preflightExit = $LASTEXITCODE
+    $preflightData = $null
+    if (Test-Path $preflightOut) {
+        try {
+            $preflightData = (Get-Content -Raw -Encoding UTF8 $preflightOut) | ConvertFrom-Json
+        }
+        catch {
+            $preflightData = $null
+        }
+    }
+    if ($null -ne $preflightData) {
+        $result.preflight = [ordered]@{
+            overall = [string]$preflightData.overall
+            blocker_count = [int]$preflightData.blocker_count
+            warning_count = [int]$preflightData.warning_count
+            json = $preflightOut
+        }
+        if ([int]$preflightData.blocker_count -gt 0) {
+            $result.warnings += "环境预检发现 $($preflightData.blocker_count) 个 blocker（$preflightOut）；验收步骤仍继续，失败以步骤结果为准"
+        }
+    }
+    else {
+        $result.warnings += "环境预检未生成可解析结果（退出码 $preflightExit）：$($preflightRaw.Trim())"
+    }
+
     $watch = [System.Diagnostics.Stopwatch]::StartNew()
     & $python (Join-Path $root "scripts/verify_offline_bundle.py") --extracted $root
     $watch.Stop()
@@ -883,6 +912,14 @@ finally {
         [void]$report.AppendLine("- 警告：$bundleWarning")
     }
     [void]$report.AppendLine()
+    if ($null -ne $result.preflight) {
+        [void]$report.AppendLine("## 环境预检")
+        [void]$report.AppendLine()
+        [void]$report.AppendLine("- 总体：$($result.preflight.overall)")
+        [void]$report.AppendLine("- blocker：$($result.preflight.blocker_count)，warn：$($result.preflight.warning_count)")
+        [void]$report.AppendLine("- 明细：$($result.preflight.json)")
+        [void]$report.AppendLine()
+    }
     [void]$report.AppendLine("| 步骤 | 状态 | 耗时(s) |")
     [void]$report.AppendLine("| --- | --- | --- |")
     foreach ($step in $result.steps) {

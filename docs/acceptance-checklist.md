@@ -123,7 +123,7 @@ python\python.exe scripts\dataset_report.py --project <项目目录>
 
 1. 解压 `laitp-offline-lean.zip` 到本地磁盘（可含中文/空格路径），核对 SHA-256 与交接说明一致。
 2. 双击 `check-bundle.bat` 完成包清单摘要、解包推理、训练报告、桌面启动与首次自检，保留输出（对应 A1 的现场自检证据）。
-2.5（可选）先在解压目录执行 `python\python.exe scripts\preflight_target.py --root .` 做只读环境预检（路径/磁盘/权限/长路径/包文件；不代表验收通过）；
+2.5（自动化）`run_acceptance.ps1` 会先自动执行只读环境预检（平台/权限/路径/磁盘/内存/包文件/长路径/代码页），结果写入报告的“环境预检”章节；也可手动执行 `python\python.exe scripts\preflight_target.py --root .` 提前查看；（路径/磁盘/权限/长路径/包文件；不代表验收通过）；
 3. 在解压目录执行 `powershell -ExecutionPolicy Bypass -File scripts\run_acceptance.ps1 -IncludeFlow -IncludeExtended`，生成 `acceptance-run.json` 与 `acceptance-report.md`（环境+步骤+结论）；如需跳过启动耗时项可加 `-SkipMeasure`。两个开关同用时 `acceptance-run.json` 的 `steps` 为 11 个（基础 3 步 + 流程 3 步 + 保存恢复 1 步 + 数据体检 1 步 + 批量历史汇总 1 步 + 第 10 步“严格验收（正向）” + 第 11 步“自检幂等性复核”）；新增步骤用包内 Python 对流程项目执行 `backend.project check-dataset --require-test --min-train/val/test`，验证严格验收正向链路，所用阈值仅用于链路验证、不作为课堂验收门槛。其中“训练与预测”环节将执行界面批量预测，并在包内存在示例模型包（`demo/model-package`）时执行模型对比；“批量历史汇总”将优先基于流程项目（该项目已有批量预测历史，汇总非空）执行，取不到流程项目或历史为空时回退到保存恢复项目。扩展前的 9 步覆盖已在正式包实测 9/9 通过（2026-11-19）；新增第 10/11 步后正式包已实测 11/11 通过（2026-11-19）；详见[项目状态报告](status-report.md)，仍需在目标机按本节记录逐项留证。
 4. 按需补充界面采样（仍用包内桌面与包内 Python；项目路径可用第 3 步生成的项目，例如 `acceptance-demo\项目父目录\界面 项目\project.json`）：
    - 数据体检与项目校验：`... -DataReport -PostChecks`（仅校验项目、不导出批量历史）。

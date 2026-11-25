@@ -149,3 +149,8 @@ def test_python_sources_have_no_invalid_escape_warnings() -> None:
                 except SyntaxWarning as exc:
                     problems.append(f"{source.relative_to(ROOT)}: {exc}")
     assert not problems, "\n".join(problems)
+
+def test_run_acceptance_includes_preflight() -> None:
+    text = (SCRIPTS / "run_acceptance.ps1").read_text(encoding="utf-8-sig")
+    for phrase in ("preflight_target.py", "环境预检", "preflight = $null"):
+        assert phrase in text, f"run_acceptance.ps1 缺少预检集成标记 {phrase!r}"

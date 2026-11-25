@@ -7,9 +7,14 @@ on:
     branches: [master]
   workflow_dispatch:
 
+concurrency:
+  group: tooling-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   tooling:
     runs-on: windows-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 

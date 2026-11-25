@@ -24,7 +24,15 @@ cd .\laitp
 .\check-bundle.bat
 ```
 
-看到自检通过（清单卫生、启动脚本指向、桌面自包含、check-bundle.bat 内容、manifest 环境声明、开发机路径扫描、清单摘要、Python 依赖、推理、训练报告、桌面启动、首次自检）后继续。若失败，先看同目录命令行输出与 `artifacts\` 下日志。
+看到自检通过（清单卫生、启动脚本指向、桌面自包含、check-bundle.bat 内容、manifest 环境声明、开发机路径扫描、清单摘要、Python 依赖、推理、训练报告、桌面启动、首次自检）后继续。
+
+**可选环境预检（只读，不启动界面）**：
+
+```powershell
+.\python\python.exe scripts\preflight_target.py --root .
+```
+
+提示 `ready-for-acceptance-attempt` 表示未发现环境 blocker；`blocked` 时按输出处理（路径过长、磁盘不足、SHA 不符等）。预检通过**不代表** 11 环节验收通过。若失败，先看同目录命令行输出与 `artifacts\` 下日志。
 
 ## 3. 一键验收（11 个环节）
 

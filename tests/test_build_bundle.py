@@ -151,7 +151,7 @@ def _write(path: Path, content: str) -> None:
 
 def test_development_path_check_ignores_docs_and_readme(tmp_path: Path) -> None:
     builder = load_builder()
-    _write(tmp_path / "docs" / "example.md", f"开发机路径 {builder.ROOT}\demo")
+    _write(tmp_path / "docs" / "example.md", f"开发机路径 {builder.ROOT}\\demo")
     _write(tmp_path / "README.md", f"示例 {builder.ROOT.as_posix()}")
     _write(tmp_path / "configs" / "acceptance.v1.json", "{\"status\": \"not_frozen\"}\n")
 

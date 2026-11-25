@@ -131,3 +131,21 @@ def test_powershell_scripts_parse() -> None:
         timeout=120,
     )
     assert completed.returncode == 0, completed.stdout + completed.stderr
+
+def test_python_sources_have_no_invalid_escape_warnings() -> None:
+    import warnings
+
+    roots = [ROOT / "scripts", ROOT / "tests", ROOT / "backend"]
+    problems: list[str] = []
+    for root in roots:
+        for source in sorted(root.rglob("*.py")):
+            if "__pycache__" in source.parts:
+                continue
+            text = source.read_text(encoding="utf-8")
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", SyntaxWarning)
+                try:
+                    compile(text, str(source), "exec")
+                except SyntaxWarning as exc:
+                    problems.append(f"{source.relative_to(ROOT)}: {exc}")
+    assert not problems, "\n".join(problems)

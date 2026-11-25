@@ -64,3 +64,10 @@ def test_bundle_sha_mismatch_blocks(tmp_path: Path) -> None:
     result = module.check_bundle_sha(zip_path, expected)
 
     assert result["status"] == "blocker"
+
+def test_memory_thresholds() -> None:
+    module = load_preflight()
+
+    assert module.check_memory(8 * 1024**3)["status"] == "pass"
+    assert module.check_memory(3 * 1024**3)["status"] == "warn"
+    assert module.check_memory(1536 * 1024**2)["status"] == "blocker"

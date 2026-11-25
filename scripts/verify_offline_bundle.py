@@ -52,6 +52,25 @@ def check_start_script(extracted: Path) -> list[str]:
     return problems
 
 
+REQUIRED_BUNDLE_SCRIPTS = (
+    "scripts/verify_offline_bundle.py",
+    "scripts/run_acceptance.ps1",
+    "scripts/preflight_target.py",
+)
+
+
+def check_bundle_scripts(extracted: Path) -> list[str]:
+    """确认关键脚本随包存在且非空（构建器白名单遗漏时尽早失败）。"""
+    problems: list[str] = []
+    for relative in REQUIRED_BUNDLE_SCRIPTS:
+        path = extracted / relative
+        if not path.is_file():
+            problems.append(f"包内缺少脚本：{relative}")
+        elif path.stat().st_size == 0:
+            problems.append(f"包内脚本为空：{relative}")
+    return problems
+
+
 def check_manifest_environment_claims(extracted: Path, manifest: dict) -> list[str]:
     """核对 manifest.environment 的声明与包内实际情况一致。"""
     environment = manifest.get("environment")
@@ -355,6 +374,10 @@ def main(argv: list[str] | None = None) -> int:
         dev_path_scan_paths = set(manifest_files) | {
             "start-desktop.bat", "check-bundle.bat", "README.txt",
         }
+        script_issues = check_bundle_scripts(extracted)
+        failures.extend(script_issues)
+        if not script_issues:
+            checks.append("包内关键脚本齐全")
         environment_issues = check_manifest_environment_claims(extracted, manifest)
         failures.extend(environment_issues)
         if not environment_issues:

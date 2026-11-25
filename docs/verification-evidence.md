@@ -33,7 +33,7 @@
 | 仓库证据 JSON 校验 | `pytest -q tests/test_docs_evidence.py` | 校验 `docs/evidence/*.json` 可解析、format 正确、不含开发机绝对路径、readiness 结构完整；3 项测试；防止归档证据损坏或再次引入开发机路径 |
 | GitHub Actions 工具/文档 CI | push 触发 `.github/workflows/tooling.yml`（windows-latest） | 运行成功（2026-11-25 run 27 在 UTF-8 控制台修复后通过；2026-11-23：run 45080969289 首次通过；run 45081434292 在新增本地 Parser 检查后通过；run 45082936242 在新增 check_docs 步骤后通过；run 45083395984 在加入 K230 静态探测脚本后通过）：`scripts/*.ps1` PowerShell 解析 0 错误，`scripts/check_docs.py` 文档一致性通过（无 dist 时跳过 SHA/体积），工具/文档测试子集（约 100 项，本机收集 97 项）通过，含 K230 ONNX 探测/启动条件、文档命令参数（Python/PowerShell）、仓库证据 JSON、源码非法转义与清单文件数一致性检查；工作流以 concurrency 自动取消旧运行、job 超时 15 分钟，测试失败时输出摘要注解；CI 仅安装 pytest/onnx/pillow/jsonschema/numpy（不装 torch、不构建桌面、不跑界面自动化）；完整验证仍以开发机运行结果为准 |
 | PowerShell 解析检查（本地 + CI） | `pytest -q tests/test_script_hygiene.py::test_powershell_scripts_parse` （无 PowerShell 时自动 skip） | 调用 PowerShell Parser 逐个解析 `scripts/*.ps1`，任一语法错误即失败；本地与 GitHub Actions 均执行；与 CI 工作流中的解析步骤互为双保险 |
-| 目标机验收前环境预检 | `python scripts/preflight_target.py --root <解压目录>` 或 `--zip <包.zip>` | 只读检查平台位数、管理员权限、路径长度、磁盘剩余、包根文件、ZIP SHA、长路径与控制台代码页；分级 blocker/warn 并输出 JSON；5 项 pytest 覆盖；不启动界面，不代表 11 环节验收通过 |
+| 目标机验收前环境预检 | `python scripts/preflight_target.py --root <解压目录>` 或 `--zip <包.zip>` | 只读检查平台位数、管理员权限、路径长度、磁盘剩余、物理内存、包根文件、ZIP SHA、长路径与控制台代码页；分级 blocker/warn 并输出 JSON；5 项 pytest 覆盖；不启动界面，不代表 11 环节验收通过 |
 | 清单文件数与文档一致 | `scripts/check_docs.py`（随文档一致性检查执行） | 读取精简/完整包 `manifest.json` 的组件文件总数，校验 `offline-bundle.md` 含当前数值；1 项测试；防止文档文件数与实际包漂移 |
 | 源码非法转义/语法警告 | `pytest -q tests/test_script_hygiene.py::test_python_sources_have_no_invalid_escape_warnings` | 以 `SyntaxWarning` 为错误编译 `scripts/`、`tests/`、`backend/` 全部 Python 源文件；修复测试夹具中 `\d` 非法转义；1 项测试 |
 | 脚本卫生（BOM/验收结构） | .\.venv\Scripts\python.exe -m pytest tests/test_script_hygiene.py | 所有 scripts/*.ps1 保持 UTF-8 BOM（防止 PS 5.1 解析中文脚本失败）；run_acceptance.ps1 含 11 个环节、超时助手（240/180/420/600/480 s）、单次透明重跑（Retried/FirstExitCode 留痕）、预检清理、包身份与磁盘字段；5 项 pytest 覆盖 |
@@ -41,7 +41,7 @@
 
 日常改动后用 `--quick` 做分钟级检查（只含上表 6 个快速步骤，不跑离线包校验、净环境流程、课堂演练、界面自动化与摄像头）；阶段验收或发布前仍运行完整版 `verify_all.py --ui`（摄像头自动化已按要求停止，不再加 `--camera`）。
 
-当前本机结果：Python 501 项测试通过、桌面构建 0 警告 0 错误、Core 检查 64 项通过、一键验证 16 步通过（摄像头步骤按要求跳过）；验收汇总为“已验证 9 / 部分 4 / 未执行 1（A10）/ 阻塞 1（A15）”。
+当前本机结果：Python 504 项测试通过、桌面构建 0 警告 0 错误、Core 检查 64 项通过、一键验证 16 步通过（摄像头步骤按要求跳过）；验收汇总为“已验证 9 / 部分 4 / 未执行 1（A10）/ 阻塞 1（A15）”。
 
 ## 2. 离线包
 
@@ -75,6 +75,7 @@
 | 检测草案跨字段校验（非激活） | `.\.venv\Scripts\python.exe scripts\detection_draft_dataset_check.py --manifest <清单.json>` | 逐样本校验图片存在/可解码、摘要、宽高、标注、框数、越界与类别范围；不接入生产；5 项 pytest 覆盖 |
 | 模型对比（界面） | 桌面“模型对比”（`ComparePackageCombo` 选择历史包 / `ComparePackageBox` 手输 + `CompareButton`）；自动化 `ui_flow.ps1 -ComparePackage <目录>` | 实测“模型对比完成：A 76.7% / B 90.0%，一致率 76.7%（30 张）”；标签不一致时消息区显示警告；CSV 导出与 7 项 pytest 覆盖 |
 | 长路径解压与自检（本机） | 解压 `dist/laitp-offline-lean.zip` 到 140 字符目录后运行包内自检 | 本机 `LongPathsEnabled=1`：解压成功、`verify_offline_bundle --extracted` 退出 0（ZIP 内最长相对路径 159 字符，完整路径约 300 字符）；耗时约 130 s（杀毒扫描影响）；未在未启用长路径的目标机验证，不作为目标机结论 |
+| 包内关键脚本齐全 | 包内自检（`verify_offline_bundle.py --extracted .`） | 确认 `verify_offline_bundle.py`、`run_acceptance.ps1`、`preflight_target.py` 随包存在且非空；2 项 pytest 覆盖；防止构建白名单遗漏脚本 |
 | 包内清单环境声明一致性 | 包内自检（`verify_offline_bundle.py --extracted .`） | 核对 manifest.environment 的 platform/python_embedded/desktop_self_contained 声明与包内实际（便携 Python、自包含 runtimeconfig）一致；新增 3 项 pytest 覆盖 |
 | 界面流程总超时看门狗 | 包内验收第 6 步调用 `ui_flow.ps1`（脚本内部总超时 540 s < 外层 600 s） | 所有状态/按钮等待循环同时受全局 deadline 约束（ui_flow 540 s、ui_create_import 360 s、ui_restore 420 s，均低于外层步骤超时）；超过总时限抛出“总超时”并写出 JSON，使失败可控且可重试，而不是被外层强杀；1 项脚本卫生测试覆盖 |
 | 包内一键验收 | 解压离线包后 `powershell -ExecutionPolicy Bypass -File scripts\run_acceptance.ps1 [-IncludeFlow] [-IncludeExtended]` | 扩展前 9 步已在正式包实测 9/9 通过（2026-11-19；批量预测 4 张/50.0%、模型对比 A 50.0% / B 0.0%、历史汇总 1 次运行）；新增第 10 步“严格验收（正向）”与第 11 步“自检幂等性复核”后已扩展为 11 步，覆盖严格验收正向链路（包内 Python 对流程项目执行 `backend.project check-dataset --require-test --min-train/val/test`；阈值仅用于链路验证，不作为课堂验收门槛）；正式包已实测 11/11 通过（2026-11-19；含“自检幂等性复核”），验收报告含“包身份”（manifest format/created_at/文件数/总字节/manifest SHA-256），详见[项目状态报告](status-report.md)。 |
@@ -96,7 +97,7 @@
 
 | 领域 | 命令 | 产物/依据 |
 | --- | --- | --- |
-| 契约 Schema 与拒绝场景 | `.\.venv\Scripts\python.exe -m pytest -q` | 501 项测试 |
+| 契约 Schema 与拒绝场景 | `.\.venv\Scripts\python.exe -m pytest -q` | 504 项测试 |
 | M0 基准（训练/导出/延迟/内存） | `.\.venv\Scripts\python.exe -m benchmarks.m0_benchmark --output artifacts\benchmark-m0` | `artifacts/benchmark-m0/m0-benchmark.json` |
 | 离线环境基准 | `.\.venv-offline\Scripts\python.exe -m benchmarks.m0_benchmark --output artifacts\benchmark-m0-offline` | `artifacts/benchmark-m0-offline/m0-benchmark.json` |
 | 真实公开数据（Fashion-MNIST 3 类） | `.\.venv\Scripts\python.exe scripts\real_data_validation.py` | `artifacts/real-data/result.json`（准确率约 0.917，产物 `art-run-real-0001`） |
@@ -119,7 +120,7 @@
 | 项目 | 值 |
 | --- | --- |
 | 精简包 | `dist/laitp-offline-lean.zip`，SHA-256 见同名 `.sha256` 文件 |
-| Python 测试 | 501 passed |
+| Python 测试 | 504 passed |
 | Core 检查 | 64 项通过 |
 | 一键验证 | 16 步通过（摄像头步骤按要求跳过） |
 | 真实数据准确率 | 约 0.917（Fashion-MNIST 3 类，构造划分） |

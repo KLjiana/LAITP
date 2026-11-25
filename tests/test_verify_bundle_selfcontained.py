@@ -194,3 +194,20 @@ def test_manifest_environment_claims_report_desktop_mismatch(tmp_path: Path) -> 
 
     assert len(problems) == 1
     assert "desktop_self_contained" in problems[0]
+
+def test_check_bundle_scripts_reports_missing(tmp_path: Path) -> None:
+    module = load_verifier()
+
+    problems = module.check_bundle_scripts(tmp_path)
+
+    assert any("preflight_target.py" in problem for problem in problems)
+
+
+def test_check_bundle_scripts_accepts_present_files(tmp_path: Path) -> None:
+    module = load_verifier()
+    for relative in module.REQUIRED_BUNDLE_SCRIPTS:
+        target = tmp_path / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text("content", encoding="utf-8")
+
+    assert module.check_bundle_scripts(tmp_path) == []

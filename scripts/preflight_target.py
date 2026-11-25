@@ -29,6 +29,39 @@ MAX_ROOT_PATH_LENGTH = 120
 REQUIRED_ROOT_FILES = ("start-desktop.bat", "check-bundle.bat")
 
 
+MIN_MEMORY_BYTES = 2 * 1024**3
+RECOMMENDED_MEMORY_BYTES = 4 * 1024**3
+
+
+def check_memory(total_bytes: int) -> dict:
+    if total_bytes < MIN_MEMORY_BYTES:
+        return {
+            "id": "memory",
+            "status": "blocker",
+            "detail": f"物理内存 {total_bytes / 1024**3:.1f} GiB，低于最低 2 GiB",
+        }
+    if total_bytes < RECOMMENDED_MEMORY_BYTES:
+        return {
+            "id": "memory",
+            "status": "warn",
+            "detail": f"物理内存 {total_bytes / 1024**3:.1f} GiB，建议 4 GiB 以上",
+        }
+    return {
+        "id": "memory",
+        "status": "pass",
+        "detail": f"物理内存 {total_bytes / 1024**3:.1f} GiB",
+    }
+
+
+def available_memory_bytes() -> int | None:
+    try:
+        import psutil
+
+        return int(psutil.virtual_memory().total)
+    except (ImportError, OSError):
+        return None
+
+
 def is_admin() -> bool:
     try:
         return bool(ctypes.windll.shell32.IsUserAnAdmin())  # type: ignore[attr-defined]
@@ -217,6 +250,11 @@ def build_report(root: Path | None, zip_path: Path | None, explicit_sha: str | N
         checks.append(check_root_files(root))
     if zip_path is not None:
         checks.append(check_bundle_sha(zip_path, explicit_sha))
+    memory = available_memory_bytes()
+    if memory is not None:
+        checks.append(check_memory(memory))
+    else:
+        checks.append({"id": "memory", "status": "warn", "detail": "无法读取内存信息"})
     checks.append(check_long_paths(long_paths_enabled()))
     checks.append(check_console_code_page(console_code_page()))
     blockers = [item for item in checks if item["status"] == "blocker"]

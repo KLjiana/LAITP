@@ -23,7 +23,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install test dependency
-        run: python -m pip install --upgrade pip pytest onnx
+        run: python -m pip install --upgrade pip pytest onnx pillow jsonschema numpy
 
       - name: Parse PowerShell scripts
         shell: pwsh

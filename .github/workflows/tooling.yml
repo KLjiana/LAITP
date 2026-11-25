@@ -61,7 +61,8 @@ jobs:
             "tests/test_k230_readiness.py",
             "tests/test_docs_evidence.py",
             "tests/test_preflight_target.py",
-            "tests/test_offline_static.py"
+            "tests/test_offline_static.py",
+            "tests/test_collect_evidence.py"
           )
           python -m pytest -q @files 2>&1 | Tee-Object -FilePath pytest-output.log
           $code = $LASTEXITCODE

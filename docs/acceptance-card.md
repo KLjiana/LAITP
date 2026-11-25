@@ -45,6 +45,14 @@ powershell -ExecutionPolicy Bypass -File scripts\run_acceptance.ps1 -IncludeFlow
 - “训练与预测”环节含界面批量预测与模型对比；“自检幂等性复核”会在结束时再次核对包内清单。
 - 界面步骤失败自动单次重试并留痕：首次失败（非 0 退出码或超时）后自动重跑一次；重试通过记为 pass 并在 `warnings` 记录首次失败，两次均失败判失败。
 
+## 3.5 收集证据（回传用）
+
+```powershell
+.\python\python.exe scripts\collect_evidence.py
+```
+
+生成 `artifacts\evidence-bundle-<时间>.zip`，内含验收产物、报告、预检与界面自动化 JSON，以及 `evidence-manifest.json`（逐文件 SHA-256/大小、缺失项列表）。把该 ZIP 与人工记录表一起回传即可；缺失项会列在 manifest 的 `missing` 中，不代表验收通过。
+
 ## 4. 看结果
 
 ```powershell

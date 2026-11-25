@@ -62,7 +62,9 @@ jobs:
           python -m pytest -q @files 2>&1 | Tee-Object -FilePath pytest-output.log
           $code = $LASTEXITCODE
           if ($code -ne 0) {
-            $tail = (Get-Content pytest-output.log -Tail 60) -join "`n"
-            Write-Output "::error title=pytest-failure::$tail"
+            $summary = (Select-String -Path pytest-output.log -Pattern 'FAILED|ERROR|AssertionError|Error:' |
+              Select-Object -First 12 |
+              ForEach-Object { $_.Line.Trim() }) -join " | "
+            Write-Output "::error title=pytest-failure::$summary"
           }
           exit $code

@@ -379,3 +379,42 @@ def test_check_docs_reads_bundle_manifest_file_count(tmp_path: Path) -> None:
 
     assert counts == {"file_count": 3}
     assert module.bundle_manifest_file_counts(tmp_path / "missing.zip") is None
+
+def test_check_docs_acceptance_artifact_mismatch(tmp_path: Path) -> None:
+    module = load_check_docs("check_docs_acceptance")
+    artifact = tmp_path / "acceptance.json"
+    artifact.write_text(
+        json.dumps(
+            {
+                "ok": False,
+                "steps": [{"name": "a", "status": "fail", "seconds": 1}],
+                "warnings": ["failed"],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    issues = module.find_acceptance_artifact_issues(artifact, "| 包内一键验收 | 11 个环节全部通过 |")
+
+    assert any("未通过" in issue for issue in issues)
+
+
+def test_check_docs_acceptance_artifact_consistent(tmp_path: Path) -> None:
+    module = load_check_docs("check_docs_acceptance_ok")
+    artifact = tmp_path / "acceptance.json"
+    steps = [{"name": f"s{index}", "status": "pass", "seconds": 1} for index in range(11)]
+    artifact.write_text(
+        json.dumps(
+            {
+                "ok": True,
+                "steps": steps,
+                "bundle": {"file_count": 18179},
+                "preflight": {"overall": "ready-for-acceptance-attempt"},
+                "warnings": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    status = "| x | 11 个环节全部通过，未使用重试 | 18,179 文件 |"
+
+    assert module.find_acceptance_artifact_issues(artifact, status) == []

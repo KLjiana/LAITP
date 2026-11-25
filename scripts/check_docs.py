@@ -229,6 +229,37 @@ def bundle_manifest_file_counts(bundle: Path) -> dict[str, int] | None:
     return {"file_count": total}
 
 
+def find_acceptance_artifact_issues(artifact_path: Path, status_text: str) -> list[str]:
+    """核对 acceptance-run-final.json 与状态报告结论是否一致（产物不存在则跳过）。"""
+    if not artifact_path.is_file():
+        return []
+    try:
+        payload = json.loads(artifact_path.read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError) as exc:
+        return [f"验收产物无法解析：{artifact_path}（{exc}）"]
+    issues: list[str] = []
+    steps = payload.get("steps") or []
+    ok = bool(payload.get("ok"))
+    if ok and "未通过" in status_text:
+        issues.append("验收产物为通过，但状态报告仍写未通过")
+    if not ok and "未通过" not in status_text:
+        issues.append("验收产物显示未通过，但状态报告未标注未通过")
+    if ok:
+        if len(steps) != 11:
+            issues.append(f"验收产物步骤数为 {len(steps)}，预期 11")
+        if "11 个环节全部通过" not in status_text:
+            issues.append("状态报告未写明“11 个环节全部通过”，与验收产物不一致")
+        bundle = payload.get("bundle") or {}
+        file_count = bundle.get("file_count")
+        if isinstance(file_count, int) and f"{file_count:,}" not in status_text:
+            issues.append(
+                f"状态报告未包含验收产物中的清单文件数（{file_count:,}）"
+            )
+        if payload.get("preflight") is None:
+            issues.append("验收产物缺少 preflight 字段（环境预检未记录）")
+    return issues
+
+
 def main() -> int:
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -249,6 +280,11 @@ def main() -> int:
     for issue in find_dependency_notice_issues(
         [ROOT / "requirements.txt", ROOT / "requirements-dev.txt"],
         DOCS / "third-party-notices.md",
+    ):
+        problems.append(issue)
+    for issue in find_acceptance_artifact_issues(
+        ROOT / "artifacts" / "acceptance-run-final.json",
+        texts.get("status-report.md", ""),
     ):
         problems.append(issue)
     readme = ROOT / "README.md"

@@ -335,3 +335,25 @@ def test_documentation_commands_match_script_help() -> None:
                     if flag not in help_text:
                         problems.append(f"{document.name}: {name} 不支持 {flag}")
     assert not problems, "\n".join(problems)
+
+def test_documentation_powershell_commands_match_script_params() -> None:
+    documents = [ROOT / "README.md", *sorted((ROOT / "docs").glob("*.md"))]
+    script_re = re.compile(r"scripts[\\/]([A-Za-z0-9_\-]+\.ps1)([^`\n]*)")
+    flag_re = re.compile(r"(?<!\S)-([A-Za-z][A-Za-z0-9_\-]*)")
+    params_cache: dict[str, set[str]] = {}
+    problems: list[str] = []
+    for document in documents:
+        for line in document.read_text(encoding="utf-8").splitlines():
+            for match in script_re.finditer(line):
+                name, tail = match.group(1), match.group(2)
+                script = ROOT / "scripts" / name
+                if not script.is_file():
+                    continue
+                if name not in params_cache:
+                    source = script.read_text(encoding="utf-8-sig")
+                    params_cache[name] = set(re.findall(r"\$([A-Za-z][A-Za-z0-9_]*)", source))
+                flags = set(flag_re.findall(re.split(r"[;|&`]", tail)[0]))
+                for flag in sorted(flags):
+                    if flag not in params_cache[name]:
+                        problems.append(f"{document.name}: {name} 无参数 -{flag}")
+    assert not problems, "\n".join(problems)

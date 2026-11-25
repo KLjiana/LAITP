@@ -5,6 +5,7 @@
 | 文件 | 生成命令 | 说明 |
 | --- | --- | --- |
 | `k230-static-probe-real-data.json` | `python scripts/k230_model_probe.py --model artifacts/real-data/fashion-project/exports/<产物>/model-package --output docs/evidence/k230-static-probe-real-data.json` | ONNX 静态图事实（算子分布、输入输出形状、参数量、manifest SHA 匹配） |
+| `preflight-dev-sample.json` | `python scripts/preflight_target.py --zip dist/laitp-offline-lean.zip --output docs/evidence/preflight-dev-sample.json` | 目标机验收前环境预检样例（本机开发环境：ready，0 blocker/0 warn）；磁盘/内存/控制台代码页等数值属本机当时状态 |
 | `k230-readiness-real-data.json` | `python scripts/k230_readiness.py --model artifacts/real-data/fashion-project/exports/<产物>/model-package --output docs/evidence/k230-readiness-real-data.json` | K230 启动条件自检结果（本机为 `blocked`，缺工具链/nncase/校准数据） |
 
 ## 边界

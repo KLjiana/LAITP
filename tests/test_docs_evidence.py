@@ -26,7 +26,7 @@ def load_evidence() -> dict[str, dict]:
 def test_evidence_json_parse_and_have_format() -> None:
     for name, data in load_evidence().items():
         assert isinstance(data, dict), name
-        assert str(data.get("format", "")).startswith("laitp-k230"), name
+        assert str(data.get("format", "")).startswith("laitp-"), name
 
 
 def test_evidence_json_have_no_development_absolute_paths() -> None:
@@ -45,3 +45,11 @@ def test_readiness_evidence_consistent_shape() -> None:
         assert data["checks"], name
         ids = {item["id"] for item in data["checks"]}
         assert {"toolchain-pinned", "nncase-installed", "calibration-data"} <= ids, name
+
+def test_preflight_evidence_shape() -> None:
+    for name, data in load_evidence().items():
+        if data.get("format") != "laitp-target-preflight-1.0":
+            continue
+        assert data["overall"] in {"ready-for-acceptance-attempt", "blocked"}, name
+        ids = {item["id"] for item in data["checks"]}
+        assert {"platform", "disk-free", "root-path-length"} <= ids, name

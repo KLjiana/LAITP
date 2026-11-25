@@ -267,3 +267,23 @@ def test_check_docs_scans_subdirectories(tmp_path: Path) -> None:
     assert len(broken) == 1
     assert "README.md" in broken[0]
     assert "missing.md" in broken[0]
+
+def test_script_help_commands_exit_zero() -> None:
+    scripts = (
+        "detection_draft_check.py",
+        "detection_draft_dataset_check.py",
+        "detection_draft_probe.py",
+        "dataset_report.py",
+        "k230_model_probe.py",
+        "k230_readiness.py",
+    )
+    for name in scripts:
+        completed = subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / name), "--help"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=120,
+        )
+        assert completed.returncode == 0, f"{name} --help 失败：{completed.stderr[:800]}"

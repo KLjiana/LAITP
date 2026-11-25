@@ -832,7 +832,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--output",
         default=None,
-        help=f"输出目录；默认 %TEMP%/{DEFAULT_OUTPUT_NAME}（不得位于仓库受保护目录下）",
+        help=f"输出目录；默认 %%TEMP%%/{DEFAULT_OUTPUT_NAME}（不得位于仓库受保护目录下）",
     )
     parser.add_argument(
         "--images",

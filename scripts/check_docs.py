@@ -203,12 +203,19 @@ def find_acceptance_audit_issues(audit_path: Path, texts: dict[str, str]) -> lis
         return [f"验收汇总产物无法解析：{audit_path}（{exc}）"]
     summary = payload.get("summary") or {}
     labels = (("verified", "已验证"), ("partial", "部分"), ("not_run", "未执行"), ("blocked", "阻塞"))
+    checklist_text = texts.get("acceptance-checklist.md", "")
     try:
-        expected = "、".join(f"{label} {int(summary[key])} 项" for key, label in labels)
+        missing = [
+            f"{label} {int(summary[key])}"
+            for key, label in labels
+            if f"{label} {int(summary[key])}" not in checklist_text
+        ]
     except (KeyError, TypeError, ValueError):
         return [f"验收汇总产物缺少完整 summary：{audit_path}"]
-    if expected not in texts.get("acceptance-checklist.md", ""):
-        return [f"验收清单未包含最新汇总“{expected}”，与 artifacts/acceptance-local.json 不一致"]
+    if missing:
+        return [
+            f"验收清单与 artifacts/acceptance-local.json 汇总不一致，缺少：{'、'.join(missing)}"
+        ]
     return []
 
 

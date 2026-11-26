@@ -459,7 +459,7 @@ def test_check_docs_acceptance_audit_summary_mismatch(tmp_path: Path) -> None:
     issues = module.find_acceptance_audit_issues(audit, texts)
 
     assert len(issues) == 1
-    assert "已验证 9 项" in issues[0]
+    assert "已验证 9" in issues[0]
 
 
 def test_check_docs_acceptance_audit_summary_ok(tmp_path: Path) -> None:

@@ -154,3 +154,8 @@ def test_run_acceptance_includes_preflight() -> None:
     text = (SCRIPTS / "run_acceptance.ps1").read_text(encoding="utf-8-sig")
     for phrase in ("preflight_target.py", "环境预检", "preflight = $null"):
         assert phrase in text, f"run_acceptance.ps1 缺少预检集成标记 {phrase!r}"
+
+def test_run_acceptance_report_mentions_preflight_and_evidence() -> None:
+    text = (SCRIPTS / "run_acceptance.ps1").read_text(encoding="utf-8-sig")
+    for phrase in ("环境预检", "收集回传证据", "collect_evidence.py", "preflight-target.json"):
+        assert phrase in text, f"run_acceptance.ps1 报告缺少 {phrase!r}"

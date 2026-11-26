@@ -71,3 +71,12 @@ def test_memory_thresholds() -> None:
     assert module.check_memory(8 * 1024**3)["status"] == "pass"
     assert module.check_memory(3 * 1024**3)["status"] == "warn"
     assert module.check_memory(1536 * 1024**2)["status"] == "blocker"
+
+def test_missing_zip_is_blocker(tmp_path: Path) -> None:
+    module = load_preflight()
+    missing = tmp_path / "no-such.zip"
+
+    check = module.check_bundle_sha(missing, None)
+
+    assert check["status"] == "blocker"
+    assert "不存在" in check["detail"]

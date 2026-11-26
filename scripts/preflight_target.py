@@ -189,6 +189,12 @@ def expected_sha_from_file(zip_path: Path, explicit: str | None) -> tuple[str | 
 
 
 def check_bundle_sha(zip_path: Path, explicit_sha: str | None) -> dict:
+    if not zip_path.is_file():
+        return {
+            "id": "bundle-sha256",
+            "status": "blocker",
+            "detail": f"指定 ZIP 不存在或不是文件：{zip_path}",
+        }
     expected, source = expected_sha_from_file(zip_path, explicit_sha)
     actual = sha256_file(zip_path)
     if expected is None:

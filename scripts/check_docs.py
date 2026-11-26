@@ -193,6 +193,43 @@ def parse_notice_versions(path: Path) -> dict[str, set[str]]:
     return versions
 
 
+def find_dependency_spec_issues(pyproject: Path, requirements: list[Path]) -> list[str]:
+    """核对 requirements 的固定版本落在 pyproject 声明的版本范围内。"""
+    if not pyproject.is_file():
+        return []
+    try:
+        import tomllib
+    except ImportError:  # pragma: no cover
+        return []
+    try:
+        from packaging.requirements import Requirement
+    except ImportError:  # pragma: no cover
+        return []
+    try:
+        data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        return [f"{pyproject.name} 无法解析：{exc}"]
+    declared: dict[str, Requirement] = {}
+    for item in (data.get("project") or {}).get("dependencies") or []:
+        try:
+            requirement = Requirement(item)
+        except ValueError:
+            continue
+        declared[requirement.name.lower()] = requirement
+    issues: list[str] = []
+    for requirement_file in requirements:
+        for name, version in parse_requirements_pins(requirement_file):
+            declared_requirement = declared.get(name)
+            if declared_requirement is None:
+                continue
+            if not declared_requirement.specifier.contains(version, prereleases=True):
+                issues.append(
+                    f"{pyproject.name} 声明 {declared_requirement}，"
+                    f"但 {requirement_file.name} 固定为 {name}=={version}，不在范围内"
+                )
+    return issues
+
+
 def find_dependency_notice_issues(
     requirements: list[Path], notices: Path
 ) -> list[str]:
@@ -285,6 +322,11 @@ def main() -> int:
     for issue in find_acceptance_artifact_issues(
         ROOT / "artifacts" / "acceptance-run-final.json",
         texts.get("status-report.md", ""),
+    ):
+        problems.append(issue)
+    for issue in find_dependency_spec_issues(
+        ROOT / "pyproject.toml",
+        [ROOT / "requirements.txt", ROOT / "requirements-dev.txt"],
     ):
         problems.append(issue)
     readme = ROOT / "README.md"

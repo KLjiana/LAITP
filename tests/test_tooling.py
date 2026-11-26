@@ -418,3 +418,31 @@ def test_check_docs_acceptance_artifact_consistent(tmp_path: Path) -> None:
     status = "| x | 11 个环节全部通过，未使用重试 | 18,179 文件 |"
 
     assert module.find_acceptance_artifact_issues(artifact, status) == []
+
+def test_check_docs_dependency_spec_mismatch(tmp_path: Path) -> None:
+    module = load_check_docs("check_docs_spec")
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text(
+        '[project]\nname = "laitp"\ndependencies = ["torch>=2.9,<3"]\n',
+        encoding="utf-8",
+    )
+    requirements = tmp_path / "requirements.txt"
+    requirements.write_text("torch==2.8.0+cpu\n", encoding="utf-8")
+
+    issues = module.find_dependency_spec_issues(pyproject, [requirements])
+
+    assert len(issues) == 1
+    assert "torch" in issues[0]
+
+
+def test_check_docs_dependency_spec_ok(tmp_path: Path) -> None:
+    module = load_check_docs("check_docs_spec_ok")
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text(
+        '[project]\nname = "laitp"\ndependencies = ["torch>=2.8,<2.9"]\n',
+        encoding="utf-8",
+    )
+    requirements = tmp_path / "requirements.txt"
+    requirements.write_text("torch==2.8.0+cpu\n", encoding="utf-8")
+
+    assert module.find_dependency_spec_issues(pyproject, [requirements]) == []

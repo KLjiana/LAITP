@@ -492,3 +492,19 @@ def test_check_docs_script_references_all_exist(tmp_path: Path) -> None:
     )
 
     assert module.find_script_reference_issues(tmp_path) == []
+
+def test_docs_mention_preflight_and_evidence_tools() -> None:
+    """交接/验收文档必须保留预检与证据收集命令，避免用户找不到新工具。"""
+    documents = (
+        ROOT / "README.md",
+        ROOT / "docs" / "acceptance-card.md",
+        ROOT / "docs" / "acceptance-checklist.md",
+        ROOT / "docs" / "teacher-quickstart.md",
+    )
+    missing: list[str] = []
+    for document in documents:
+        text = document.read_text(encoding="utf-8")
+        for tool in ("preflight_target.py", "collect_evidence.py"):
+            if tool not in text:
+                missing.append(f"{document.relative_to(ROOT)} 未提及 {tool}")
+    assert not missing, "\n".join(missing)

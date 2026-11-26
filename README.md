@@ -97,7 +97,7 @@ py -3.12 -m venv .venv
    powershell -ExecutionPolicy Bypass -File scripts\run_acceptance.ps1 -IncludeFlow -IncludeExtended
    ```
 
-   脚本会先自动执行只读**环境预检**（结果写入 `preflight` 字段与报告“环境预检”章节），再生成 `acceptance-run.json` 与 `acceptance-report.md`。**是否通过以实际输出与验证证据为准，不要预先写成“已通过”。**
+   脚本会先自动执行只读**环境预检**（`scripts\preflight_target.py`）（结果写入 `preflight` 字段与报告“环境预检”章节），再生成 `acceptance-run.json` 与 `acceptance-report.md`。**是否通过以实际输出与验证证据为准，不要预先写成“已通过”。**
 
 5. 验收后收集回传证据（可选但建议；把 ZIP 与现场记录一起回传）：
 

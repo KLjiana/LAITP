@@ -446,3 +446,29 @@ def test_check_docs_dependency_spec_ok(tmp_path: Path) -> None:
     requirements.write_text("torch==2.8.0+cpu\n", encoding="utf-8")
 
     assert module.find_dependency_spec_issues(pyproject, [requirements]) == []
+
+def test_check_docs_acceptance_audit_summary_mismatch(tmp_path: Path) -> None:
+    module = load_check_docs("check_docs_audit")
+    audit = tmp_path / "acceptance-local.json"
+    audit.write_text(
+        json.dumps({"summary": {"verified": 9, "partial": 4, "not_run": 1, "blocked": 1}}),
+        encoding="utf-8",
+    )
+    texts = {"acceptance-checklist.md": "最近一次汇总：**已验证 8 项、部分 4 项、未执行 1 项、阻塞 2 项**"}
+
+    issues = module.find_acceptance_audit_issues(audit, texts)
+
+    assert len(issues) == 1
+    assert "已验证 9 项" in issues[0]
+
+
+def test_check_docs_acceptance_audit_summary_ok(tmp_path: Path) -> None:
+    module = load_check_docs("check_docs_audit_ok")
+    audit = tmp_path / "acceptance-local.json"
+    audit.write_text(
+        json.dumps({"summary": {"verified": 9, "partial": 4, "not_run": 1, "blocked": 1}}),
+        encoding="utf-8",
+    )
+    texts = {"acceptance-checklist.md": "最近一次汇总：**已验证 9 项、部分 4 项、未执行 1 项、阻塞 1 项**"}
+
+    assert module.find_acceptance_audit_issues(audit, texts) == []

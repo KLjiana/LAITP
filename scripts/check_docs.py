@@ -193,6 +193,25 @@ def parse_notice_versions(path: Path) -> dict[str, set[str]]:
     return versions
 
 
+def find_acceptance_audit_issues(audit_path: Path, texts: dict[str, str]) -> list[str]:
+    """核对 acceptance-local.json 的 A1–A15 汇总与文档表述一致（产物不存在则跳过）。"""
+    if not audit_path.is_file():
+        return []
+    try:
+        payload = json.loads(audit_path.read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError) as exc:
+        return [f"验收汇总产物无法解析：{audit_path}（{exc}）"]
+    summary = payload.get("summary") or {}
+    labels = (("verified", "已验证"), ("partial", "部分"), ("not_run", "未执行"), ("blocked", "阻塞"))
+    try:
+        expected = "、".join(f"{label} {int(summary[key])} 项" for key, label in labels)
+    except (KeyError, TypeError, ValueError):
+        return [f"验收汇总产物缺少完整 summary：{audit_path}"]
+    if expected not in texts.get("acceptance-checklist.md", ""):
+        return [f"验收清单未包含最新汇总“{expected}”，与 artifacts/acceptance-local.json 不一致"]
+    return []
+
+
 def find_dependency_spec_issues(pyproject: Path, requirements: list[Path]) -> list[str]:
     """核对 requirements 的固定版本落在 pyproject 声明的版本范围内。"""
     if not pyproject.is_file():
@@ -327,6 +346,11 @@ def main() -> int:
     for issue in find_dependency_spec_issues(
         ROOT / "pyproject.toml",
         [ROOT / "requirements.txt", ROOT / "requirements-dev.txt"],
+    ):
+        problems.append(issue)
+    for issue in find_acceptance_audit_issues(
+        ROOT / "artifacts" / "acceptance-local.json",
+        texts,
     ):
         problems.append(issue)
     readme = ROOT / "README.md"

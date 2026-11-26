@@ -90,16 +90,24 @@ py -3.12 -m venv .venv
 
 1. 将 `laitp-offline-lean.zip` 解压到本机磁盘（可用中文 / 空格路径；不要放在只读目录、U 盘或网络共享盘）。
 2. 双击包内的 `start-desktop.bat` 启动。首次启动会自动自检，状态栏显示“就绪（环境自检通过）”后即可使用。
-3. 双击 `check-bundle.bat` 做包内自检（清单摘要、清单卫生、桌面自包含、manifest 环境声明、开发机路径扫描、推理、训练报告、桌面启动与首次自检）。
+3. 双击 `check-bundle.bat` 做包内自检（清单摘要、清单卫生、桌面自包含、manifest 环境声明、开发机路径扫描、关键脚本齐全、推理、训练报告、桌面启动与首次自检）。
 4. 在解压目录内执行包内一键验收（11 个环节，约 5–6 分钟，实际耗时随机器变化）：
 
    ```powershell
    powershell -ExecutionPolicy Bypass -File scripts\run_acceptance.ps1 -IncludeFlow -IncludeExtended
    ```
 
-   脚本生成 `acceptance-run.json` 与 `acceptance-report.md`。**是否通过以实际输出与验证证据为准，不要预先写成“已通过”。**
+   脚本会先自动执行只读**环境预检**（结果写入 `preflight` 字段与报告“环境预检”章节），再生成 `acceptance-run.json` 与 `acceptance-report.md`。**是否通过以实际输出与验证证据为准，不要预先写成“已通过”。**
 
-5. 目标机首次部署或依赖修复使用完整包 `laitp-offline-full.zip`（含 wheel）；日常课堂分发用精简包。
+5. 验收后收集回传证据（可选但建议；把 ZIP 与现场记录一起回传）：
+
+   ```powershell
+   .\python\python.exe scripts\collect_evidence.py
+   ```
+
+   生成 `artifacts\evidence-bundle-<时间>.zip`（含逐文件 SHA-256 与缺失项清单的 `evidence-manifest.json`）。
+
+6. 目标机首次部署或依赖修复使用完整包 `laitp-offline-full.zip`（含 wheel）；日常课堂分发用精简包。
 
 分发前请阅读 `dist\handoff\交接说明.txt` 与[老师快速上手](docs/teacher-quickstart.md)；目标机逐项验收按[目标机离线验收清单](docs/acceptance-checklist.md)执行。**分发包版本、体积与 SHA-256 会变化，统一以[离线分发包](docs/offline-bundle.md)及同名 `.sha256` 文件为准，本文不写具体值。**
 

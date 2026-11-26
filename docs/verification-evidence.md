@@ -47,7 +47,7 @@
 
 日常改动后用 `--quick` 做分钟级检查（只含上表 6 个快速步骤，不跑离线包校验、净环境流程、课堂演练、界面自动化与摄像头）；阶段验收或发布前仍运行完整版 `verify_all.py --ui`（摄像头自动化已按要求停止，不再加 `--camera`）。
 
-当前本机结果：Python 524 项测试通过、桌面构建 0 警告 0 错误、Core 检查 64 项通过、一键验证 16 步通过（摄像头步骤按要求跳过）；验收汇总为“已验证 9 / 部分 4 / 未执行 1（A10）/ 阻塞 1（A15）”。
+当前本机结果：Python 526 项测试通过、桌面构建 0 警告 0 错误、Core 检查 64 项通过、一键验证 16 步通过（摄像头步骤按要求跳过）；验收汇总为“已验证 9 / 部分 4 / 未执行 1（A10）/ 阻塞 1（A15）”。
 
 ## 2. 离线包
 
@@ -103,7 +103,7 @@
 
 | 领域 | 命令 | 产物/依据 |
 | --- | --- | --- |
-| 契约 Schema 与拒绝场景 | `.\.venv\Scripts\python.exe -m pytest -q` | 524 项测试 |
+| 契约 Schema 与拒绝场景 | `.\.venv\Scripts\python.exe -m pytest -q` | 526 项测试 |
 | M0 基准（训练/导出/延迟/内存） | `.\.venv\Scripts\python.exe -m benchmarks.m0_benchmark --output artifacts\benchmark-m0` | `artifacts/benchmark-m0/m0-benchmark.json` |
 | 离线环境基准 | `.\.venv-offline\Scripts\python.exe -m benchmarks.m0_benchmark --output artifacts\benchmark-m0-offline` | `artifacts/benchmark-m0-offline/m0-benchmark.json` |
 | 真实公开数据（Fashion-MNIST 3 类） | `.\.venv\Scripts\python.exe scripts\real_data_validation.py` | `artifacts/real-data/result.json`（准确率约 0.917，产物 `art-run-real-0001`） |
@@ -126,7 +126,7 @@
 | 项目 | 值 |
 | --- | --- |
 | 精简包 | `dist/laitp-offline-lean.zip`，SHA-256 见同名 `.sha256` 文件 |
-| Python 测试 | 524 passed |
+| Python 测试 | 526 passed |
 | Core 检查 | 64 项通过 |
 | 一键验证 | 16 步通过（摄像头步骤按要求跳过） |
 | 真实数据准确率 | 约 0.917（Fashion-MNIST 3 类，构造划分） |

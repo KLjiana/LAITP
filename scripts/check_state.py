@@ -153,6 +153,7 @@ def check_handoff_documents(
     repo_root: Path | None = None,
     handoff_dir: Path | None = None,
     manifest: dict | None = None,
+    dist_dir: Path | None = None,
 ) -> dict:
     """核对交接目录中的 README.md 与六份 docs 副本是否与仓库最新内容一致。
 
@@ -160,7 +161,9 @@ def check_handoff_documents(
       并提示重新运行 ``scripts/make_handoff.py``；
     - ``handoff-manifest.json``（未显式传入时从交接目录读取）记录了该文档的 SHA-256 时，
       同时核对与交接目录实际文件一致，不一致记为 problem；
-    - 交接目录或任一文件缺失、manifest 未记录时只记 note，不判失败。
+    - 交接目录或任一文件缺失、manifest 未记录时只记 note，不判失败；
+    - 提供 ``dist_dir`` 时，额外核对 manifest 记录的离线包体积/SHA-256 与 ``dist/`` 中实际
+      ZIP 是否一致（不一致提示重新运行 ``make_handoff.py``；ZIP 不存在时只记 note）。
 
     返回 dict：
     - ``checked``：至少有一份文档实际执行了比较时为 True；
@@ -226,6 +229,34 @@ def check_handoff_documents(
                 f"handoff-manifest.json 记录的 {handoff_name} SHA-256 与交接目录"
                 f"实际文件不一致（记录 {recorded_sha}，实际 {handoff_sha}）"
             )
+
+    if dist_dir is not None and isinstance(manifest_data, dict):
+        dist = Path(dist_dir)
+        for key in ("bundle", "bundle_full"):
+            recorded = manifest_data.get(key)
+            if not isinstance(recorded, dict):
+                continue
+            name = recorded.get("name")
+            if not isinstance(name, str) or not name:
+                continue
+            actual_path = dist / name
+            if not actual_path.is_file():
+                notes.append(f"未找到 {display_path(actual_path)}，跳过 manifest 体积/SHA 核对")
+                continue
+            actual_size = actual_path.stat().st_size
+            actual_sha = sha256_file(actual_path)
+            recorded_size = recorded.get("size")
+            recorded_sha = recorded.get("sha256")
+            if recorded_size != actual_size:
+                problems.append(
+                    f"handoff-manifest.json 记录的 {name} 体积与实际不一致"
+                    f"（记录 {recorded_size}，实际 {actual_size}），请重新运行 scripts/make_handoff.py"
+                )
+            if isinstance(recorded_sha, str) and recorded_sha and recorded_sha != actual_sha:
+                problems.append(
+                    f"handoff-manifest.json 记录的 {name} SHA-256 与实际不一致，"
+                    "请重新运行 scripts/make_handoff.py"
+                )
 
     if problems:
         detail = "；".join(problems)
@@ -629,7 +660,9 @@ def main() -> int:
             sample_result["detail"],
         )
 
-    documents_result = check_handoff_documents(ROOT, HANDOFF, manifest=manifest)
+    documents_result = check_handoff_documents(
+        ROOT, HANDOFF, manifest=manifest, dist_dir=ROOT / "dist"
+    )
     notes.extend(documents_result["notes"])
     if documents_result["checked"]:
         record(

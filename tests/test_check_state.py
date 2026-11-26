@@ -558,3 +558,59 @@ def test_broken_zip_is_reported(tmp_path: Path) -> None:
 
     assert result["checked"] is True
     assert any("无法作为 ZIP 打开" in problem for problem in result["problems"])
+
+def test_check_handoff_documents_checks_bundle_size_and_sha(tmp_path: Path) -> None:
+    module = load_check_state()
+    repo = tmp_path / "repo"
+    handoff = tmp_path / "handoff"
+    dist = tmp_path / "dist"
+    for directory in (repo, handoff, dist):
+        directory.mkdir()
+    content = "# readme\n"
+    (repo / "README.md").write_text(content, encoding="utf-8")
+    (handoff / "README.md").write_text(content, encoding="utf-8")
+    bundle = dist / "laitp-offline-lean.zip"
+    bundle.write_bytes(b"zip-data")
+    manifest = {
+        "documents": [
+            {"name": "README.md", "sha256": module.sha256_file(handoff / "README.md")}
+        ],
+        "bundle": {
+            "name": bundle.name,
+            "size": bundle.stat().st_size,
+            "sha256": module.sha256_file(bundle),
+        },
+    }
+
+    result = module.check_handoff_documents(repo, handoff, manifest, dist)
+
+    assert result["problems"] == []
+
+
+def test_check_handoff_documents_reports_bundle_mismatch(tmp_path: Path) -> None:
+    module = load_check_state()
+    repo = tmp_path / "repo"
+    handoff = tmp_path / "handoff"
+    dist = tmp_path / "dist"
+    for directory in (repo, handoff, dist):
+        directory.mkdir()
+    (repo / "README.md").write_text("# readme\n", encoding="utf-8")
+    (handoff / "README.md").write_text("# readme\n", encoding="utf-8")
+    bundle = dist / "laitp-offline-lean.zip"
+    bundle.write_bytes(b"zip-data")
+    manifest = {
+        "documents": [
+            {"name": "README.md", "sha256": module.sha256_file(handoff / "README.md")}
+        ],
+        "bundle": {
+            "name": bundle.name,
+            "size": 1,
+            "sha256": "0" * 64,
+        },
+    }
+
+    result = module.check_handoff_documents(repo, handoff, manifest, dist)
+    joined = " ".join(result["problems"])
+
+    assert "体积与实际不一致" in joined
+    assert "SHA-256 与实际不一致" in joined

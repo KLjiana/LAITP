@@ -141,8 +141,13 @@ SHA-256：{lean['sha256']}
 --------
 1. 解压 {lean['name']} 到本机磁盘（中文/空格路径也可，避免只读目录或网络盘）。
 2. 双击 start-desktop.bat 启动；首次启动会自动自检，状态显示“就绪（环境自检通过）”。
-3. 双击 check-bundle.bat 可先做一次包内自检（清单摘要、推理、报告、桌面、自检）。
-4. 日常使用请阅读 teacher-quickstart.md；目标机验收请按 acceptance-checklist.md 执行。
+3. 双击 check-bundle.bat 可先做一次包内自检（清单摘要、关键脚本齐全、推理、报告、桌面、首次自检）。
+4. 目标机验收：在解压目录执行
+   powershell -ExecutionPolicy Bypass -File scripts\run_acceptance.ps1 -IncludeFlow -IncludeExtended
+   脚本会先自动执行只读环境预检，结果写入 acceptance-report.md 的“环境预检”章节；11 个环节全部通过才算本机验收通过。
+5. 验收后用 python\python.exe scripts\collect_evidence.py 生成 artifacts\evidence-bundle-<时间>.zip
+   （含 evidence-manifest.json 的逐文件 SHA-256 与缺失项），随现场记录一起回传。
+6. 日常使用请阅读 teacher-quickstart.md；目标机逐项验收请按 acceptance-checklist.md 执行。
 
 目录内容
 --------

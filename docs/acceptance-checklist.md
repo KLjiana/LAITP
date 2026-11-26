@@ -76,6 +76,7 @@
 | A10 数据与准确率 | |
 | A12 断网方式 | |
 | 失败项与日志 | |
+| 回传证据包 | 在该包目录运行 `python\python.exe scripts\collect_evidence.py`，记录生成的 `artifacts\evidence-bundle-<时间>.zip` 名称并随记录回传（含 `evidence-manifest.json` 的 SHA-256/缺失项） |
 
 ## 6. 判定规则
 
@@ -130,6 +131,8 @@ python\python.exe scripts\dataset_report.py --project <项目目录>
    - 归档往返：`... -ArchiveDir <归档目录>`。
    - 批量预测后再导出历史汇总 / 模型对比：`... -ImagePath <png> -TrainPredict -Epochs 3 -BatchImagesDir <测试图片目录> -PostChecks`；一键验收已用包内 `demo/model-package` 覆盖模型对比，如需与自己的历史模型包对比，再加 `-ComparePackage <历史模型包目录>`；没有历史模型包时省略该参数，并记录该手动补充项未执行。
 5. 将 `acceptance-report.md`、`artifacts\ui-flow.json`、项目 `runs/dataset-report.md`、`runs/batch-history.md` 与截图/错误信息整理后填入第 5 节记录模板。任一脚本退出码非 0 或界面状态文案不符合预期时按第 6 节判定；脚本执行完成不等于验收通过，未执行项（如包内无示例模型包时的模型对比、或手动补充的历史模型包对比）须如实记录。
+
+- 结束后在包目录执行 `python\python.exe scripts\collect_evidence.py`，生成带 `evidence-manifest.json` 的 ZIP（含逐文件 SHA-256 与缺失项），连同第 5 节记录一起回传。
 
 ### 常见失败与排查
 

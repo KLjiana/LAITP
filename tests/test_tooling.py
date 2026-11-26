@@ -472,3 +472,23 @@ def test_check_docs_acceptance_audit_summary_ok(tmp_path: Path) -> None:
     texts = {"acceptance-checklist.md": "最近一次汇总：**已验证 9 项、部分 4 项、未执行 1 项、阻塞 1 项**"}
 
     assert module.find_acceptance_audit_issues(audit, texts) == []
+
+def test_check_docs_script_references_missing(tmp_path: Path) -> None:
+    module = load_check_docs("check_docs_scripts")
+    (tmp_path / "doc.md").write_text(
+        "见 `scripts/does-not-exist.py` 与 scripts\\verify_all.py\n", encoding="utf-8"
+    )
+
+    issues = module.find_script_reference_issues(tmp_path)
+
+    assert any("does-not-exist.py" in issue for issue in issues)
+    assert not any("verify_all.py" in issue for issue in issues)
+
+
+def test_check_docs_script_references_all_exist(tmp_path: Path) -> None:
+    module = load_check_docs("check_docs_scripts_ok")
+    (tmp_path / "doc.md").write_text(
+        "运行 scripts/verify_all.py 与 scripts\\run_acceptance.ps1\n", encoding="utf-8"
+    )
+
+    assert module.find_script_reference_issues(tmp_path) == []

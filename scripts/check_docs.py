@@ -193,6 +193,26 @@ def parse_notice_versions(path: Path) -> dict[str, set[str]]:
     return versions
 
 
+SCRIPT_REFERENCE_PATTERN = re.compile(r"scripts[\\/]([A-Za-z0-9_\-]+\.(?:py|ps1))")
+
+
+def find_script_reference_issues(docs_dir: Path) -> list[str]:
+    """核对文档中引用的 scripts/xxx.py|ps1 均真实存在（防止命令随重构失效）。"""
+    issues: list[str] = []
+    seen: set[str] = set()
+    for path in sorted(docs_dir.rglob("*.md")):
+        text = path.read_text(encoding="utf-8")
+        for match in SCRIPT_REFERENCE_PATTERN.finditer(text):
+            name = match.group(1)
+            key = f"{path.name}:{name}"
+            if key in seen:
+                continue
+            seen.add(key)
+            if not (ROOT / "scripts" / name).is_file():
+                issues.append(f"{path.relative_to(docs_dir)} 引用了不存在的脚本 scripts/{name}")
+    return issues
+
+
 def find_acceptance_audit_issues(audit_path: Path, texts: dict[str, str]) -> list[str]:
     """核对 acceptance-local.json 的 A1–A15 汇总与文档表述一致（产物不存在则跳过）。"""
     if not audit_path.is_file():
@@ -359,6 +379,8 @@ def main() -> int:
         ROOT / "artifacts" / "acceptance-local.json",
         texts,
     ):
+        problems.append(issue)
+    for issue in find_script_reference_issues(ROOT / "docs"):
         problems.append(issue)
     readme = ROOT / "README.md"
     if readme.is_file():

@@ -62,6 +62,31 @@ REQUIRED_BUNDLE_SCRIPTS = (
 )
 
 
+REQUIRED_BUNDLE_DOCS = (
+    "README.md",
+    "docs/acceptance-card.md",
+    "docs/acceptance-checklist.md",
+    "docs/teacher-quickstart.md",
+    "docs/known-limitations.md",
+    "docs/third-party-notices.md",
+    "docs/verification-evidence.md",
+    "docs/detection-decision-log.md",
+    "docs/evidence/README.md",
+)
+
+
+def check_bundle_docs(extracted: Path) -> list[str]:
+    """确认交接/验收相关文档随包存在且非空（缺少时现场无法自查与取证）。"""
+    problems: list[str] = []
+    for relative in REQUIRED_BUNDLE_DOCS:
+        path = extracted / relative
+        if not path.is_file():
+            problems.append(f"包内缺少文档：{relative}")
+        elif path.stat().st_size == 0:
+            problems.append(f"包内文档为空：{relative}")
+    return problems
+
+
 def check_bundle_scripts(extracted: Path) -> list[str]:
     """确认关键脚本随包存在且非空（构建器白名单遗漏时尽早失败）。"""
     problems: list[str] = []
@@ -381,6 +406,10 @@ def main(argv: list[str] | None = None) -> int:
         failures.extend(script_issues)
         if not script_issues:
             checks.append("包内关键脚本齐全")
+        doc_issues = check_bundle_docs(extracted)
+        failures.extend(doc_issues)
+        if not doc_issues:
+            checks.append("包内交接/验收文档齐全")
         environment_issues = check_manifest_environment_claims(extracted, manifest)
         failures.extend(environment_issues)
         if not environment_issues:

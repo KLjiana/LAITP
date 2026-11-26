@@ -211,3 +211,23 @@ def test_check_bundle_scripts_accepts_present_files(tmp_path: Path) -> None:
         target.write_text("content", encoding="utf-8")
 
     assert module.check_bundle_scripts(tmp_path) == []
+
+def test_check_bundle_docs_reports_missing(tmp_path: Path) -> None:
+    module = load_verifier()
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "README.md").write_text("# readme", encoding="utf-8")
+
+    problems = module.check_bundle_docs(tmp_path)
+
+    assert any("docs/acceptance-card.md" in item for item in problems)
+    assert any("docs/evidence/README.md" in item for item in problems)
+
+
+def test_check_bundle_docs_accepts_complete_tree(tmp_path: Path) -> None:
+    module = load_verifier()
+    for relative in module.REQUIRED_BUNDLE_DOCS:
+        target = tmp_path / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text("# doc", encoding="utf-8")
+
+    assert module.check_bundle_docs(tmp_path) == []
